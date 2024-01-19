@@ -26,6 +26,7 @@ for col in df.columns:
 
 # Removing the equipment and test_results columns, and generating the X and y structures
 X = df.drop(columns = ['Equipment', 'Test_Results', 'New_Results'], axis = 1)
+df = df.drop(columns = ['Equipment', 'Test_Results'], axis = 1)
 y = df['New_Results']
 
 # Using label encoder to convert the y labels into integer values
@@ -50,3 +51,4 @@ np.savetxt('Processed_Files/X_MinMaxScaler.csv', min_max_scaler_data, delimiter 
 np.savetxt('Processed_Files/X_Original.csv', X, delimiter = ',')
 np.savetxt('Processed_Files/y_LabelEncoder.csv', y, delimiter = ',')
 np.savetxt('Processed_Files/y_Original', y, delimiter = ',')
+df.to_csv('Processed_Files/OrganisedOriginalDataset.csv')
