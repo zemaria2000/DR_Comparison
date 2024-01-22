@@ -1,6 +1,6 @@
 # AutoML experiments folder
-/AutoML_Experiments
-/Best_Model
+/Autoencoder/AutoML_Experiments
+/Autoencoder/Best_Model
 
 # Dataset folder
 /Dataset
