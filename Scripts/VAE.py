@@ -145,28 +145,7 @@ tuner.search(globals()['train_X'], globals()['train_X'], epochs = trial_epochs, 
 tuner.results_summary()
 
 
-## RETRIEVING THE BEST MODEL AND TRAINING IT
-
-# Getting the best hyperparameters
-best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
-print(best_hps.values)
-
-# Retrieving the best model
-model = tuner.hypermodel.build(best_hps)
-model.summary()
-# Final fitting of the model
-history = model.fit(globals()['train_X'], globals()['train_X'], epochs = epochs, batch_size = best_hps.values['Batch_Size'], validation_split = validation_split, callbacks = [early_stop, cp]).history
-
-# Getting the encoder
-encoder = tf.keras.Model(model.input, [model.get_layer('Z_mean').output, model.get_layer('Z_Log_Sigma').output, model.layers[1].output[2]], name = 'Encoder')
-encoder.summary()
-
-
-# ## Step 4 - Proceeding with Dimensionality Reduction study and comparison
-
-# Getting the encoder reduced data 
-vae_reduced_train = encoder.predict(globals()['train_X'])[0]
-vae_reduced_test = encoder.predict(test_X)[0]
+# ## Step 4 - Storing the best vae encoders
 
 # Getting the models with the best hyperparameters
 best_models = tuner.get_best_hyperparameters(num_trials=5)
@@ -179,7 +158,7 @@ for element in best_models:
     # Compiling the model
     model.compile(optimizer = tf.keras.optimizers.Adam(learning_rate = globals()['learning_rate']), loss = 'mse', metrics = [tf.keras.metrics.RootMeanSquaredError()])
     # Training the model
-    history = model.fit(globals()['train_X'], globals()['train_X'], epochs = 1000, batch_size = globals()['batch_size'], validation_split = 0.1, callbacks = [early_stop, cp]).history
+    history = model.fit(globals()['train_X'], globals()['train_X'], epochs = 1000, batch_size = globals()['batch_size'], validation_split = validation_split, callbacks = [early_stop, cp]).history
     # Taking the encoder
     encoder = tf.keras.Model(model.input, model.layers[-2].output)
     if not os.path.exists('../Models/Autoencoders'):

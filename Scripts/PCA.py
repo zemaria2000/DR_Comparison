@@ -6,9 +6,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-import os
-import json
-import yaml
+import os, json, yaml, pickle
 
 # Using some simple classifiers
 from sklearn.linear_model import LogisticRegression
@@ -87,19 +85,31 @@ def evaluate_model(**params):
 result = gp_minimize(evaluate_model, search_space, n_calls = num_trials, n_random_starts = 10, random_state = 42, verbose = 1)
 
 # Analysing the best gotten parameters
-result.x
+print(result.x)
+
+
+# Step 4 - Training the model and storing it for further usage
+
 # Storing the parameters in a dictionary
 best_parameters = dict()
 for key, value in zip(optimized_parameters, result.x):
     best_parameters[key] = str(value)
 
-# Saving the best parameters dictionary in a file
+# Using the best parameters to train the model
+pca = PCA(**best_parameters)
+pca.fit(train_X)
+
+# Saving the best parameters dictionary in a file + storing the PCA trained model
 if not os.path.exists(model_path):
     os.makedirs(model_path)
     with open(f'{model_path}/PCA.json', 'w') as fp:
         json.dump(best_parameters, fp, indent = 3)
+    with open(f'{model_path}/PCA.pkl', 'wb') as fp:
+        pickle.dump(pca, fp)
 else:
     with open(f'{model_path}/PCA.json', 'w') as fp:
         json.dump(best_parameters, fp, indent = 3)
+    with open(f'{model_path}/PCA.pkl', 'wb') as fp:
+        pickle.dump(pca, fp)
 
    

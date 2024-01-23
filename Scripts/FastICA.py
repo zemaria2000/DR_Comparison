@@ -1,4 +1,4 @@
-
+# %%
 import numpy as np 
 import pandas as pd 
 import matplotlib.pyplot as plt 
@@ -8,6 +8,7 @@ import seaborn as sns
 import json
 import os
 import yaml
+import pickle
 
 # Using some simple classifiers
 from sklearn.linear_model import LogisticRegression
@@ -28,7 +29,7 @@ data_path, model_path = Configs['directories']['datasets'], Configs['directories
 # Getting some important variables
 num_trials, train_split, validation_split= Configs['models']['num_trials'], Configs['models']['train_split'], Configs['models']['validation_split']
 
-
+# %%
 # ## Step 1 - Loading data        
 
 X = np.loadtxt(f'{data_path}/X_MinMaxScaler.csv', delimiter = ',')
@@ -85,22 +86,32 @@ def evaluate_model(**params):
 # 2.3 - conduct optimisation process
 result = gp_minimize(evaluate_model, search_space, n_calls = num_trials, n_random_starts = 10, random_state = 42, verbose = 1)
 
+# Analysing the best gotten parameters
+print(result.x)
 
 
-# Step 3 - Analysing the best gotten parameters
-result.x
+# Step 3 - Training the model and storing it for further usage
+
 # Storing the parameters in a dictionary
 best_parameters = dict()
 for key, value in zip(optimized_parameters, result.x):
-    best_parameters[key] = str(value)
+    best_parameters[key] = value
 
-# Saving the best parameters dictionary in a file
+# Using the best parameters to train the model
+ica = FastICA(**best_parameters)
+ica.fit(X_train)
+
+# Saving the best parameters dictionary in a file + storing the PCA trained model
 if not os.path.exists(model_path):
     os.makedirs(model_path)
     with open(f'{model_path}/ICA.json', 'w') as fp:
         json.dump(best_parameters, fp, indent = 3)
+    with open(f'{model_path}/ICA.pkl', 'wb') as fp:
+        pickle.dump(ica, fp)
 else:
     with open(f'{model_path}/ICA.json', 'w') as fp:
         json.dump(best_parameters, fp, indent = 3)
+    with open(f'{model_path}/ICA.pkl', 'wb') as fp:
+        pickle.dump(ica, fp)
 
    
