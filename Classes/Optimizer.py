@@ -67,18 +67,25 @@ class ModelOptimisation:
         def evaluate_model(**params):
             # Defining the models and its params
             self.model.set_params(**params)
-            # Now fitting the PCA model to the training data
-            if self.model_name != 'LDA':
+            
+            if self.model_name != 'LDA' and self.model_name != 'RF':
+                
                 self.model.fit(self.train_X)
+                
+                X_transformed = self.model.transform(self.train_X)
+                # Define the model to be used for the classification
+                log_reg = LogisticRegression()
+                # Define the evaluation procedure
+                cv = RepeatedStratifiedKFold(n_splits = 10, n_repeats = 10, random_state = 42)
+                # Evaluate the model
+                result = cross_val_score(log_reg, X_transformed, self.train_y, cv = cv, n_jobs = -1, scoring = 'accuracy', verbose = 1)
+            
             else:
                 self.model.fit(self.train_X, self.train_y)
-            X_transformed = self.model.transform(self.train_X)
-            # Define the model to be used for the classification
-            log_reg = LogisticRegression()
-            # Define the evaluation procedure
-            cv = RepeatedStratifiedKFold(n_splits = 10, n_repeats = 10, random_state = 42)
-            # Evaluate the model
-            result = cross_val_score(log_reg, X_transformed, self.train_y, cv = cv, n_jobs = -1, scoring = 'accuracy', verbose = 1)
+                # Define the evaluation procedure
+                cv = RepeatedStratifiedKFold(n_splits = 10, n_repeats = 10, random_state = 42)
+                result = cross_val_score(self.model, self.train_X, self.train_y, cv = cv, n_jobs = -1, scoring = 'accuracy', verbose = 1)
+            
             # Return the mean accuracy
             return 1.0 - result.mean()  
         
