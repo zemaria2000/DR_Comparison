@@ -43,7 +43,7 @@ ss_svd.append(skopt.space.Categorical(['auto', 'QR', 'LU', 'none'], name = 'powe
 ss_lda = []
 ss_lda.append(skopt.space.Integer(2, X.shape[1], name = 'n_components'))
 ss_lda.append(skopt.space.Categorical(['svd', 'lsqr', 'eigen'], name = 'solver'))
-ss_ica.append(skopt.space.Real(0, 1, name = 'shrinkage'))
+ss_lda.append(skopt.space.Real(0, 1, name = 'shrinkage'))
 
 # RF (feature selection)
 ss_rf = []
