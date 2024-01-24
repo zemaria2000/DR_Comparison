@@ -118,6 +118,7 @@ class Autoencoders:
         # Initializing the tuner search - that will basically iterate over a certain number of different combinations (defined in the tuner above)
         self.tuner.search(self.train_X, self.train_X, epochs = self.trial_epochs, batch_size = self.batch_size, validation_split = self.validation_split, callbacks = [self.early_stop])
 
+        print('The best parameters were the following: \n', self.tuner.get_best_hyperparameters(num_trials = 1)[0], '\n')
         # Returns the best model's hyperparameters
         return self.tuner.get_best_hyperparameters(num_trials = 1)
 

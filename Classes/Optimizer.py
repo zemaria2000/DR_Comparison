@@ -25,6 +25,10 @@ class ModelOptimisation:
         self.X = np.loadtxt(f'{self.dataset_path}/X_MinMaxScaler.csv', delimiter = ',')
         self.y = np.loadtxt(f'{self.dataset_path}/y_LabelEncoder.csv', delimiter = ',')
 
+        # Giving just an error if the number of trials defined in the settings is lower than 10
+        if self.num_trials < 10:
+            raise ValueError('The number of trials must be at least 10 according to the skopt library')
+
     # Creating the training and testing splits
     def pre_processing(self):
         # Returning the train and test splits
@@ -35,7 +39,7 @@ class ModelOptimisation:
     # Before using this function, the user must define the model to be optimised, as well as its hyperparameters
     def Non_DL_optimise(self, search_space: list):
         
-        self.train_X, self.test_X, self.train_y, self.test_y = self.pre_processing(self)
+        self.train_X, self.test_X, self.train_y, self.test_y = self.pre_processing()
 
         # Defining the evaluator function
         @use_named_args(search_space)
@@ -49,9 +53,9 @@ class ModelOptimisation:
             # Define the model to be used for the classification
             log_reg = LogisticRegression()
             # Define the evaluation procedure
-            cv = RepeatedStratifiedKFold(n_splits = 50, n_repeats = 10, random_state = 42)
+            cv = RepeatedStratifiedKFold(n_splits = 10, n_repeats = 10, random_state = 42)
             # Evaluate the model
-            result = cross_val_score(log_reg, X_transformed, self.train_y, cv = cv, n_jobs = -1, scoring = 'accuracy')
+            result = cross_val_score(log_reg, X_transformed, self.train_y, cv = cv, n_jobs = -1, scoring = 'accuracy', verbose = 1)
             # Return the mean accuracy
             return 1.0 - result.mean()  
         
@@ -74,7 +78,7 @@ class ModelOptimisation:
         self.model.set_params(**model_parameters)
         self.model.fit(self.train_X)
 
-        print(self.model.get_params())
+        # print(self.model.get_params())
         # Saving the best parameters dictionary in a file + storing the PCA trained model
         if not os.path.exists(self.model_path):
             os.makedirs(self.model_path)
@@ -87,4 +91,6 @@ class ModelOptimisation:
                 json.dump(best_parameters, fp, indent = 3)
             with open(f'{self.model_path}/{model_name}.pkl', 'wb') as fp:
                 pickle.dump(self.model, fp)
+        
+        print('The best model was stored in the following path:', self.model_path, '\n\n')
 
