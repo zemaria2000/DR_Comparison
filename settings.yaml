@@ -6,7 +6,7 @@ models:
   # Epochs only applicable to Deep Learning models
   num_epochs_trials: 5
   num_final_epochs: 20
-  available_models: [PCA, ICA, AE, VAE, SVD, LDA, RF]
+  available_models: [PCA, ICA, SVD, LDA, RF, AE, VAE]
   DL_models: [AE, VAE]
 
 # A series of useful directories for each script
