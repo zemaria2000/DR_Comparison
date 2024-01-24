@@ -1,13 +1,6 @@
 from Classes import Optimizer, Autoencoders
 import yaml, sys
-# Importing the models
-from sklearn.decomposition import PCA, FastICA
-from sklearn.decomposition import TruncatedSVD as SVD
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-from sklearn.ensemble import RandomForestClassifier as RF
-
 import pickle
-from keras_tuner import HyperParameters as hp
 
 
 # We should launch the file as "python train.py <model>, the model being a string correspondant to the model to be trained
@@ -29,27 +22,15 @@ if len(args) == 1:
 
         print('Conducting hyperparameter optimisation for model', item, '\n')
         # Getting the model to be optimised (in a string format)
-        model_string = item
+        model_name = item
 
         if item not in DL_models:
 
-            # Checking the model to be trained
-            if model_string == 'PCA':
-                model = PCA()
-            elif model_string == 'ICA':
-                model = FastICA()
-            elif model_string == 'SVD':
-                model = SVD()
-            elif model_string == 'LDA':
-                model = LDA()
-            elif model_string == 'RF':
-                model = RF()
-            
             # Instantiating the classe
-            optimizer = Optimizer.ModelOptimisation(model, num_trials, train_split, validation_split)
+            optimizer = Optimizer.ModelOptimisation(model_name, num_trials, train_split, validation_split)
 
             # Loading the search space for the particular model
-            with open(f'./SearchSpace/ss_{model_string.lower()}.txt', 'rb') as fp:
+            with open(f'./SearchSpace/ss_{model_name.lower()}.txt', 'rb') as fp:
                 search_space = pickle.load(fp)
 
             # conducting the hyperparameter optimisation
@@ -57,7 +38,7 @@ if len(args) == 1:
             print("The model's best hyperparameters were the following: \n", result.x, '\n')
 
             # Storing the best model + parameters
-            optimizer.store_best_model(search_space, result, model_string)
+            optimizer.store_best_model(search_space, result)
 
         else:
 
@@ -65,13 +46,13 @@ if len(args) == 1:
             optimizer = Autoencoders.Autoencoders(num_trials, train_split, validation_split)
 
             # Choosing the correct model and conducting the search
-            if model_string == 'AE':
+            if model_name == 'AE':
                 best_model = optimizer.build_autoencoder()
-            if model_string == 'VAE':
+            if model_name == 'VAE':
                 best_model = optimizer.build_vae()
 
             # Saving the best model
-            optimizer.save_model(best_model, model_string)
+            optimizer.save_model(best_model, model_name)
 
         print('Optimisation process concluded for', item, 'model \n\n')
 
@@ -83,36 +64,24 @@ else:
         raise SyntaxError(f"The model given is not available... Please provide a model to be trained from the following list: {Configs['models']['available_models']}")
     if len(args) > 2:
         raise SyntaxError("Too many arguments were given... Please provide only one model to be trained, or don't provide any if you want to train all the models")
-
     else: 
-        model_string = args[1].upper()
-        if model_string == 'PCA':
-            model = PCA()
-        elif model_string == 'ICA':
-            model = FastICA()
-        elif model_string == 'SVD':
-            model = SVD()
-        elif model_string == 'LDA':
-            model = LDA()
-        elif model_string == 'RF':
-            model = RF()
-
-
+        model_name = args[1].upper()
+        
     # If the model is not a DL model, we'll use the ModelOptimisation class
-    if model_string not in DL_models:
+    if model_name not in DL_models:
 
         # Instantiating the classes
-        optimizer = Optimizer.ModelOptimisation(model, num_trials, train_split, validation_split)
+        optimizer = Optimizer.ModelOptimisation(model_name, num_trials, train_split, validation_split)
 
         # Loading the search space for the particular model
-        with open(f'./SearchSpace/ss_{model_string.lower()}.txt', 'rb') as fp:
+        with open(f'./SearchSpace/ss_{model_name.lower()}.txt', 'rb') as fp:
             search_space = pickle.load(fp)
 
         # conducting the hyperparameter optimisation
         result = optimizer.Non_DL_optimise(search_space)
 
         # Storing the best model + parameters
-        optimizer.store_best_model(search_space, result, model_string)
+        optimizer.store_best_model(search_space, result)
 
 
     # If the model is a DL model, we'll use the Autoencoders class
@@ -122,10 +91,10 @@ else:
         optimizer = Autoencoders.Autoencoders(num_trials, train_split, validation_split)
 
         # Choosing the correct model and conducting the search
-        if model == 'AE':
+        if model_name == 'AE':
             best_model = optimizer.build_autoencoder()
-        if model == 'VAE':
+        if model_name == 'VAE':
             best_model = optimizer.build_vae()
 
         # Saving the best model
-        optimizer.save_model(best_model, model_string)
+        optimizer.save_model(best_model, model_name)
