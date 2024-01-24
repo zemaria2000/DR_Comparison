@@ -6,10 +6,11 @@ models:
   # Epochs only applicable to Deep Learning models
   num_epochs_trials: 5
   num_final_epochs: 20
-  available_models: [PCA, ICA, SVD, LDA, RF, AE, VAE]
+  available_models: [PCA, ICA, SVD, RF, AE, VAE]
+  # available_models: [PCA, ICA, SVD, LDA, RF, AE, VAE]
   DL_models: [AE, VAE]
 
 # A series of useful directories for each script
 directories:
-  best_model: 'C:/Users/Lenovo\OneDrive - Universidade de Aveiro/Doutoramento/ILLIANCE_Project/DR_Comparison/DR_Comparison/Models' # Path where each of the best models is saved
-  datasets: 'C:/Users/Lenovo\OneDrive - Universidade de Aveiro/Doutoramento/ILLIANCE_Project/DR_Comparison/DR_Comparison/Processed_Files'
+  best_model: './Models' # Path where each of the best models is saved
+  datasets: './Processed_Files'

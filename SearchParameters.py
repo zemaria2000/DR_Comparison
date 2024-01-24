@@ -37,13 +37,13 @@ ss_ica.append(skopt.space.Categorical(['eigh', 'svd'], name = 'whiten_solver'))
 ss_svd = []
 ss_svd.append(skopt.space.Integer(2, X.shape[1], name = 'n_components'))
 ss_svd.append(skopt.space.Categorical(['arpack', 'randomized'], name = 'algorithm'))
-ss_svd.append(skopt.space.Categorical(['auto', 'QR', 'LU', 'none'], name = 'power_iteration_normalizer'))
+ss_svd.append(skopt.space.Categorical(['auto', 'OR', 'LU', 'none'], name = 'power_iteration_normalizer'))
 
 # LDA
 ss_lda = []
-ss_lda.append(skopt.space.Integer(2, X.shape[1], name = 'n_components'))
-ss_lda.append(skopt.space.Categorical(['svd', 'lsqr', 'eigen'], name = 'solver'))
-ss_lda.append(skopt.space.Real(0, 1, name = 'shrinkage'))
+ss_lda.append(skopt.space.Integer(2, len(np.unique(y))-1, name = 'n_components'))
+ss_lda.append(skopt.space.Categorical(['svd', 'eigen'], name = 'solver'))
+# ss_lda.append(skopt.space.Real(0, 1, name = 'shrinkage'))
 
 # RF (feature selection)
 ss_rf = []
