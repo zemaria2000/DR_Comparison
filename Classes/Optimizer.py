@@ -25,7 +25,7 @@ class ModelOptimisation:
         self.train_split = train_split
         self.validation_split = validation_split
         self.model_name = model_name
-        self.X = np.loadtxt(f'{self.dataset_path}/X_MinMaxScaler.csv', delimiter = ',')
+        self.X = np.loadtxt(f'{self.dataset_path}/X_StandardScaler.csv', delimiter = ',')
         self.y = np.loadtxt(f'{self.dataset_path}/y_LabelEncoder.csv', delimiter = ',')
 
         # Giving just an error if the number of trials defined in the settings is lower than 10
