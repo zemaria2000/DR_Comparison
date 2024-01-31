@@ -58,8 +58,9 @@ ss_rf.append(skopt.space.Categorical([True, False], name = 'bootstrap'))
 ss_nmf = []
 ss_nmf.append(skopt.space.Integer(2, X.shape[1]-1, name = 'n_components'))
 ss_nmf.append(skopt.space.Categorical(['random', 'nndsvd', 'nndsvda', 'nndsvdar'], name = 'init'))
-ss_nmf.append(skopt.space.Categorical(['cd', 'mu'], name = 'solver'))
-ss_nmf.append(skopt.space.Categorical(['frobenius', 'kullback-leibler', 'itakura-saito'], name = 'beta_loss'))
+# ss_nmf.append(skopt.space.Categorical(['cd', 'mu'], name = 'solver'))
+# ss_nmf.append(skopt.space.Categorical(['frobenius', 'kullback-leibler', 'itakura-saito'], name = 'beta_loss'))
+# ss_nmf.append(skopt.space.Categorical(['kullback-leibler', 'itakura-saito'], name = 'beta_loss'))
 
 # RFEV (feature selection, Recursive Feature Elimination with Cross-Validation)
 ss_rfe = []
