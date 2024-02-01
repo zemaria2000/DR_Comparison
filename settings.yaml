@@ -5,12 +5,16 @@ models:
   validation_split: 0.1
   # Epochs only applicable to Deep Learning models
   num_epochs_trials: 5
-  num_final_epochs: 20
-  available_models: [PCA, ICA, SVD, RF, AE, VAE]
+  num_final_epochs: 5
+  available_models: [PCA, ICA, SVD, RF, AE, NMF, RFE]
   # available_models: [PCA, ICA, SVD, LDA, RF, AE, VAE]
   DL_models: [AE, VAE]
+  FS_models: [RFE, RF]
 
 # A series of useful directories for each script
 directories:
-  best_model: './Models' # Path where each of the best models is saved
-  datasets: './Processed_Files'
+  best_model: './Models/Models' # Path where each of the best models is saved
+  datasets: './Data'
+  parameters: './Models/Parameters'
+  search_space: './Models/SearchSpace'
+  results: './Results'
