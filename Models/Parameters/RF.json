@@ -1,0 +1,7 @@
+{
+   "n_estimators": "23",
+   "criterion": "gini",
+   "max_features": "log2",
+   "bootstrap": "True",
+   "n_components": "42"
+}

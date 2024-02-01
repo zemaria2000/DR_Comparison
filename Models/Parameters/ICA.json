@@ -1,0 +1,8 @@
+{
+   "n_components": "28",
+   "algorithm": "deflation",
+   "whiten": "unit-variance",
+   "fun": "exp",
+   "tol": "0.0004011987336417964",
+   "whiten_solver": "svd"
+}

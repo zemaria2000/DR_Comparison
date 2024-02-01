@@ -1,0 +1,7 @@
+{
+   "n_components": "38",
+   "whiten": "False",
+   "svd_solver": "full",
+   "n_oversamples": "30",
+   "power_iteration_normalizer": "QR"
+}
