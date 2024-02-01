@@ -1,0 +1,11 @@
+n_estimators,criterion,max_features,bootstrap,Results,n_components
+83,entropy,,True,0.027766676285288394,4
+53,entropy,log2,False,0.01571743987268437,31
+27,gini,sqrt,True,0.015686113770805532,42
+95,entropy,,True,0.01644896884003766,24
+67,entropy,sqrt,True,0.015842875443221494,17
+49,entropy,,False,0.016302645558164297,35
+23,gini,log2,True,0.015654743947919436,35
+55,log_loss,log2,False,0.017567231979293774,10
+16,log_loss,log2,False,0.01970949576562031,7
+16,entropy,sqrt,True,0.017013319604936905,25

@@ -1,0 +1,11 @@
+n_components,whiten,svd_solver,n_oversamples,power_iteration_normalizer,Results
+38,False,full,30,QR,0.01595776332069776
+6,False,auto,8,auto,0.02851908203372633
+5,True,randomized,1,none,0.029867120927934976
+30,True,arpack,2,auto,0.021632422187536804
+20,False,randomized,12,LU,0.023043310030036124
+30,False,randomized,24,none,0.020054356142582774
+33,False,arpack,47,auto,0.01820468426874411
+19,False,auto,13,auto,0.02464211076280054
+29,True,auto,20,QR,0.02179967690175455
+36,False,auto,29,LU,0.017880700672866068
