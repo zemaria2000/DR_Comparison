@@ -1,10 +1,13 @@
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
 import numpy as np 
 from sklearn.model_selection import train_test_split
-import os, json, yaml, pickle
+import os, json, yaml, pickle, warnings
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 # Scikit-Optimisation library
-from skopt import gp_minimize
 from sklearn.model_selection import RepeatedStratifiedKFold, cross_val_score
 from skopt.utils import use_named_args
 from sklearn.decomposition import PCA, FastICA, NMF
@@ -12,6 +15,8 @@ from sklearn.decomposition import TruncatedSVD as SVD
 from sklearn.feature_selection import RFECV
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
+from sklearn import preprocessing
+from skopt import gp_minimize
 # Tensroflow and keras libraries
 import tensorflow as tf 
 import keras_tuner as kt
@@ -181,6 +186,8 @@ class hyperparameter_optimiser:
         # Create the training and testing splits
         self.train_X, self.test_X, self.train_y, self.test_y = self.pre_processing()
 
+        self.n_components_list = []
+
         # Defining the evaluator function
         @use_named_args(self.search_space)
 
@@ -191,20 +198,21 @@ class hyperparameter_optimiser:
             if self.model_name == 'RF':
                 self.model.fit(self.train_X, self.train_y)
                 # Gathering RF's more important features
-                feature_imp = list(zip(np.arange(self.X.shape[1]), self.model.feature_importances_))
+                feature_imp = list(zip(np.arange(self.X_NonDL.shape[1]), self.model.feature_importances_))
                 feature_imp.sort(key = lambda x: x[1], reverse = True)
                 # Defining the number of components to be selected
-                n_components = np.random.randint(2, self.X.shape[1])
+                n_components = np.random.randint(2, self.X_NonDL.shape[1])
+                self.n_components_list.append(n_components)
                 # Getting the indexes and the test rf set
                 indexes = [tup[0] for tup in feature_imp[:n_components]]
                 # Reducing the dataset to only contain the features it selected
                 X_transformed = self.train_X[:, indexes]
 
-            if self.model_name == 'RFE': 
+            elif self.model_name == 'RFE': 
                 feature_selector = self.model.fit(self.train_X, self.train_y)
                 # Reducing the dataset to only contain the features it selected
                 X_transformed = self.train_X[:, feature_selector.support_]
-                
+
             else:
                 self.model.fit(self.train_X)
                 # Getting the reduced dataset
@@ -246,6 +254,9 @@ class hyperparameter_optimiser:
         for i, result in enumerate(self.result.x_iters):
             result.append(self.result.func_vals[i])
             results_df.loc[i] = result
+        
+        if self.model_name == 'RF':
+            results_df['n_components'] = self.n_components_list
 
         # Storing the DataFrame as a CSV file
         if not os.path.exists('./Models/Opt_Results'):
@@ -264,9 +275,12 @@ class hyperparameter_optimiser:
             for key, value in zip(self.search_space, self.result.x):
                 best_parameters[key.name] = str(value)
                 model_parameters[key.name] = value
+            # For the models where there is no "n_components" parameter
+            if self.model_name == 'RF':
+                best_parameters['n_components'] = str(max(self.n_components_list))
             # Using the best parameters to train the model
             self.model.set_params(**model_parameters)
-            if self.model_name != 'RF':
+            if self.model_name != 'RFE' and self.model_name != 'RF':
                 self.model.fit(self.train_X)
             else:
                 self.model.fit(self.train_X, self.train_y)

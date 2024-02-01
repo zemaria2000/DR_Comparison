@@ -1,4 +1,4 @@
-from Classes import Optimizer, Autoencoders
+from Classes import Optimise
 import yaml, sys
 import pickle
 
@@ -24,41 +24,24 @@ if len(args) == 1:
         # Getting the model to be optimised (in a string format)
         model_name = item
 
-        if item not in DL_models:
+        # Instantiating the class
+        model_optimiser = Optimise.hyperparameter_optimiser(model_name)
 
-            # Instantiating the classe
-            optimizer = Optimizer.ModelOptimisation(model_name, num_trials, train_split, validation_split)
-
-            # Loading the search space for the particular model
-            with open(f'./SearchSpace/ss_{model_name.lower()}.txt', 'rb') as fp:
-                search_space = pickle.load(fp)
-
-            # conducting the hyperparameter optimisation
-            result = optimizer.Non_DL_optimise(search_space)
-            print("The model's best hyperparameters were the following: \n", result.x, '\n')
-
-            # Storing the best model + parameters
-            optimizer.store_best_model(search_space, result)
-
-        else:
-
-            # Instantiating the class
-            optimizer = Autoencoders.Autoencoders(num_trials, train_split, validation_split)
-
-            # Choosing the correct model and conducting the search
-            if model_name == 'AE':
-                best_model = optimizer.build_autoencoder()
+        # Promoting the model optimisation
+        if model_name in DL_models:
             if model_name == 'VAE':
-                best_model = optimizer.build_vae()
+                model_optimiser.build_optimised_vae()
+            if model_name == 'AE':
+                model_optimiser.build_optimised_autoencoder()
+        else:
+            model_optimiser.Non_DL_optimise()
 
-            # Saving the best model
-            optimizer.save_model(best_model, model_name)
+        # Store the best model + hyperparameters
+        model_optimiser.store_best_model()
 
-        print('Optimisation process concluded for', item, 'model \n\n')
 
-# In case we want to train only one particular model
 else:
-    
+
     # Analysing the model that was given:
     if len(args) == 2 and args[1].upper() not in available_models:
         raise SyntaxError(f"The model given is not available... Please provide a model to be trained from the following list: {Configs['models']['available_models']}")
@@ -66,35 +49,19 @@ else:
         raise SyntaxError("Too many arguments were given... Please provide only one model to be trained, or don't provide any if you want to train all the models")
     else: 
         model_name = args[1].upper()
-        
-    # If the model is not a DL model, we'll use the ModelOptimisation class
-    if model_name not in DL_models:
 
-        # Instantiating the classes
-        optimizer = Optimizer.ModelOptimisation(model_name, num_trials, train_split, validation_split)
+    # Instantiate the optimiser class
+    model_optimiser = Optimise.hyperparameter_optimiser(model_name)
 
-        # Loading the search space for the particular model
-        with open(f'./SearchSpace/ss_{model_name.lower()}.txt', 'rb') as fp:
-            search_space = pickle.load(fp)
-
-        # conducting the hyperparameter optimisation
-        result = optimizer.Non_DL_optimise(search_space)
-
-        # Storing the best model + parameters
-        optimizer.store_best_model(search_space, result)
-
-
-    # If the model is a DL model, we'll use the Autoencoders class
-    else:
-
-        # Instantiating the class
-        optimizer = Autoencoders.Autoencoders(num_trials, train_split, validation_split)
-
-        # Choosing the correct model and conducting the search
-        if model_name == 'AE':
-            best_model = optimizer.build_autoencoder()
+    # Promoting the model optimisation
+    if model_name in DL_models:
         if model_name == 'VAE':
-            best_model = optimizer.build_vae()
+            model_optimiser.build_optimised_vae()
+        if model_name == 'AE':
+            model_optimiser.build_optimised_autoencoder()
+    else:
+        model_optimiser.Non_DL_optimise()
 
-        # Saving the best model
-        optimizer.save_model(best_model, model_name)
+    # Store the best model + hyperparameters
+    model_optimiser.store_best_model()
+
