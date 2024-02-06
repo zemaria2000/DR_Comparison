@@ -195,18 +195,24 @@ class hyperparameter_optimiser:
             # Defining the models and its params
             self.model.set_params(**params)
             
-            if self.model_name == 'RF':
+            if self.model_name == 'RF' or self.model_name == 'LDA':
                 self.model.fit(self.train_X, self.train_y)
-                # Gathering RF's more important features
-                feature_imp = list(zip(np.arange(self.X_NonDL.shape[1]), self.model.feature_importances_))
-                feature_imp.sort(key = lambda x: x[1], reverse = True)
-                # Defining the number of components to be selected
-                n_components = np.random.randint(2, self.X_NonDL.shape[1])
-                self.n_components_list.append(n_components)
-                # Getting the indexes and the test rf set
-                indexes = [tup[0] for tup in feature_imp[:n_components]]
-                # Reducing the dataset to only contain the features it selected
-                X_transformed = self.train_X[:, indexes]
+
+                if self.model_name == 'RF':
+                    # Gathering RF's more important features
+                    feature_imp = list(zip(np.arange(self.X_NonDL.shape[1]), self.model.feature_importances_))
+                    feature_imp.sort(key = lambda x: x[1], reverse = True)
+                    # Defining the number of components to be selected
+                    n_components = np.random.randint(2, self.X_NonDL.shape[1])
+                    self.n_components_list.append(n_components)
+                    # Getting the indexes and the test rf set
+                    indexes = [tup[0] for tup in feature_imp[:n_components]]
+                    # Reducing the dataset to only contain the features it selected
+                    X_transformed = self.train_X[:, indexes]
+
+                else:
+                    # Getting the reduced dataset
+                    X_transformed = self.model.transform(self.train_X)
 
             elif self.model_name == 'RFE': 
                 feature_selector = self.model.fit(self.train_X, self.train_y)
@@ -280,7 +286,7 @@ class hyperparameter_optimiser:
                 best_parameters['n_components'] = str(max(self.n_components_list))
             # Using the best parameters to train the model
             self.model.set_params(**model_parameters)
-            if self.model_name != 'RFE' and self.model_name != 'RF':
+            if self.model_name != 'RFE' and self.model_name != 'RF' and self.model_name != 'LDA':
                 self.model.fit(self.train_X)
             else:
                 self.model.fit(self.train_X, self.train_y)
