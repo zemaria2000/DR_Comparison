@@ -44,7 +44,7 @@ ss_svd.append(skopt.space.Categorical(['auto', 'OR', 'LU', 'none'], name = 'powe
 # LDA
 ss_lda = []
 ss_lda.append(skopt.space.Integer(2, len(np.unique(y))-1, name = 'n_components'))
-ss_lda.append(skopt.space.Categorical(['svd', 'eigen'], name = 'solver'))
+# ss_lda.append(skopt.space.Categorical(['svd', 'eigen'], name = 'solver'))
 # ss_lda.append(skopt.space.Real(0, 1, name = 'shrinkage'))
 
 # RF (feature selection)
