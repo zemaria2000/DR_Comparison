@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os, yaml, pickle, sys
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
 from sklearn.decomposition import PCA, FastICA
 from sklearn.decomposition import TruncatedSVD as SVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
@@ -10,6 +10,12 @@ from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn.feature_selection import RFECV
 import tensorflow as tf
 from tensorflow.keras import backend as K
+import matplotlib.pyplot as plt
+
+# Classifiers
+from sklearn.neural_network import MLPClassifier as MLP
+from sklearn.linear_model import LogisticRegression as LogReg
+from sklearn.neighbors import KNeighborsClassifier as kNN
 
 
 class Testing:
@@ -196,23 +202,91 @@ class Testing:
         test_X_reduced = model.predict(test_X)
 
         return train_X_reduced, test_X_reduced, train_y, test_y
-    
-    # Method that allows us to retrieve some important metrics for our results
+        
+    # Method that allows us to retrieve the confusion matrix values
     def get_metrics(self, y_true, y_pred, n_components):
 
-        # Calculate some important metrics for our results
-        accuracy = accuracy_score(y_true, y_pred)
-        precision = precision_score(y_true, y_pred, average = 'weighted')
-        recall = recall_score(y_true, y_pred, average = 'weighted')
-        f1 = f1_score(y_true, y_pred, average = 'weighted')
-        cm = confusion_matrix(y_true, y_pred)
-        
-        # Getting the TP, TN, FP, FN for each class
-        TP, TN, FP, FN = cm[1][1], cm[0][0], cm[0][1], cm[1][0]        
+        df = pd.DataFrame()
+        mcc = matthews_corrcoef(y_true, y_pred)
 
-        return pd.Series([self.model_name, n_components, accuracy, precision, recall, f1, TP, TN, FP, FN], index = ['Model', 'N_components', 'Accuracy', 'Precision', 'Recall', 'F1', 'TP', 'TN', 'FP', 'FN'])
+        # cm = multilabel_confusion_matrix(y_true, y_pred)
 
-    
+        # df = pd.DataFrame()
+        # # Getting the TP, TN, FP, FN for each class
+        # for i, conf_matrix in enumerate(cm):
+        #     TP = conf_matrix[1, 1]  # True Positives
+        #     TN = conf_matrix[0, 0]  # True Negatives
+        #     FP = conf_matrix[0, 1]  # False Positives
+        #     FN = conf_matrix[1, 0]  # False Negatives
+        #     precision = TP / (TP + FP)
+        #     recall = TP / (TP + FN)
+        #     f1 = 2* (precision * recall) / (precision + recall)
+        #     accuracy = (TP + TN) / (TP + TN + FP + FN)
+        #     specificity = TN / (TN + FP)
+        #     label = i
+        aux_series = pd.Series([self.model_name, n_components, mcc], index = ['Model', 'N_components', 'MCC'])
+        df = df.append(aux_series, ignore_index = True)
+
+        return df
+
     # Method that allows to save the results
     def save_results(self, results, path, file_name):
         results.to_csv(f'{path}/{file_name}.csv', index = False)
+
+
+    # Method that allows us to test and plot the models' performance for all number of components
+    def plot_all_components(self):
+
+        # Getting the default model
+        model = self.load_default_model() 
+
+        # array with the possible number of components
+        n_components = np.arange(2, self.X.shape[1], 1)
+
+        # Instantiate all classifiers
+        mlp = MLP()
+        logreg = LogReg()
+        knn = kNN()
+        rf = RF()
+        classifiers_list = [mlp, logreg, knn, rf]
+
+        # auxiliary df
+        aux_df = pd.DataFrame()
+
+        # Iterate over all components for all classifiers
+        # for i in n_components:
+        for i in range(2, 11):
+
+            # Fitting the DR technique
+            self.fit_DR_technique(model, i)
+
+            # Generate the reduced datasets
+            if self.model_name in self.DL_models:
+                train_X_reduced, test_X_reduced, train_y, test_y = self.generate_reduced_datasets_DL(model)
+            else:
+                train_X_reduced, test_X_reduced, train_y, test_y = self.generate_reduced_datasets_nonDL(model, i)
+            
+            for classifier in classifiers_list:
+                
+                # Get the classifier's name
+                classifier_name = classifier.__class__.__name__
+                # Fitting the classifier
+                classifier.fit(train_X_reduced, train_y)
+                # Make the predictions
+                y_pred = classifier.predict(test_X_reduced)
+                # Evaluate the model
+                metrics = self.get_metrics(test_y, y_pred, i)
+                metrics.drop('Model', inplace = True)
+                metrics['Classifier'] = classifier_name
+                aux_df = pd.concat([aux_df, metrics], axis = 1)
+
+            print("Tested for ", i, " components")
+            
+        # Group the dataframe by the classifier
+        grouped = aux_df.groupby('Classifier')
+        # Plot the results
+        for name, group in grouped:
+            plt.plot(group['N_components'], group['Accuracy'], label = name)
+            
+        plt.show()
+
