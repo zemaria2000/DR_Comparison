@@ -206,28 +206,13 @@ class Testing:
     # Method that allows us to retrieve the confusion matrix values
     def get_metrics(self, y_true, y_pred, n_components):
 
-        df = pd.DataFrame()
         mcc = matthews_corrcoef(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred, average = 'weighted')
+        acc = accuracy_score(y_true, y_pred)
+        prec = precision_score(y_true, y_pred, average = 'weighted')
 
-        # cm = multilabel_confusion_matrix(y_true, y_pred)
-
-        # df = pd.DataFrame()
-        # # Getting the TP, TN, FP, FN for each class
-        # for i, conf_matrix in enumerate(cm):
-        #     TP = conf_matrix[1, 1]  # True Positives
-        #     TN = conf_matrix[0, 0]  # True Negatives
-        #     FP = conf_matrix[0, 1]  # False Positives
-        #     FN = conf_matrix[1, 0]  # False Negatives
-        #     precision = TP / (TP + FP)
-        #     recall = TP / (TP + FN)
-        #     f1 = 2* (precision * recall) / (precision + recall)
-        #     accuracy = (TP + TN) / (TP + TN + FP + FN)
-        #     specificity = TN / (TN + FP)
-        #     label = i
-        aux_series = pd.Series([self.model_name, n_components, mcc], index = ['Model', 'N_components', 'MCC'])
-        df = pd.concat([df, aux_series.to_frame().T], ignore_index = True, axis = 0)
-
-        return df
+        aux_series = pd.Series([self.model_name, n_components, mcc, f1, acc, prec], index = ['Model', 'N_components', 'MCC', 'F1', 'Accuracy', 'Precision'])
+        return aux_series
 
     # Method that allows to save the results
     def save_results(self, results, path, file_name):

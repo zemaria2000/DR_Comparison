@@ -168,79 +168,83 @@ def test_all_variables(classifier):
 # -------------------- ANALYSING THE MODEL(S) TO EVALUATE ------------------------
 # --------------------------------------------------------------------------------
 
+if __name__ == '__main__':
 
-# CASE 1 - WE WANT TO CONDUCT TESTS FOR ALL VARIABLES
-if len(args) == 1:
+    # # CASE 1 - WE WANT TO CONDUCT TESTS FOR ALL VARIABLES
+    # if len(args) == 1:
 
-    results_df = pd.DataFrame()
+    #     results_df = pd.DataFrame()
 
-    for item in models_list:
+    #     for item in models_list:
 
-        # --------------------------------------------------------------------------------
-        # ----------------- CONDUCTING THE TESTING PROCESS FOR THE MODELS ----------------
-        # --------------------------------------------------------------------------------
-    
-        model_name = item
-        # instantiating the testing class
-        tester = Testing.Testing(model_name)
-
-        # Loading the optimised and default models
-        default_model = tester.load_default_model()
-        best_model = tester.load_best_model()
-
-        # getting the results of the tests for the default, optimised and all variables models
-        default_results = test_default_models(default_model, n_components_list, n_tests, classifier)
-        optimised_results = test_optimised_model(best_model, n_tests, classifier)
-        all_variables_results = test_all_variables(classifier)
-
-        # Joining all of them into a single dataframe
-        if results_df.empty:
-            results_df = default_results.append(optimised_results, ignore_index = True)
-            results_df = results_df.append(all_variables_results, ignore_index = True)
+    #         # --------------------------------------------------------------------------------
+    #         # ----------------- CONDUCTING THE TESTING PROCESS FOR THE MODELS ----------------
+    #         # --------------------------------------------------------------------------------
         
-        else:
-            results_df = results_df.append(default_results, ignore_index = True)
-            results_df = results_df.append(optimised_results, ignore_index = True)
-            results_df = results_df.append(all_variables_results, ignore_index = True)
+    #         model_name = item
+    #         # instantiating the testing class
+    #         tester = Testing.Testing(model_name)
 
-        print(results_df)
+    #         # Loading the optimised and default models
+    #         default_model = tester.load_default_model()
+    #         best_model = tester.load_best_model()
 
-        # Saving the results
-        results_df.to_csv(f'{Configs["directories"]["results"]}/results_all.csv', index = False)
+    #         # getting the results of the tests for the default, optimised and all variables models
+    #         default_results = test_default_models(default_model, n_components_list, n_tests, classifier)
+    #         optimised_results = test_optimised_model(best_model, n_tests, classifier)
 
-# CASE 2 - WE WANT TO CONDUCT TESTS FOR A SPECIFIC VARIABLE
-else:
+    #         # Joining all of them into a single dataframe
+    #         if results_df.empty:
+    #             results_df = default_results.append(optimised_results, ignore_index = True)
 
-    # Analysing the model that was given:
-    if len(args) == 2 and args[1].upper() not in models_list:
-        raise SyntaxError(f"The model given is not available... Please provide a model to be trained from the following list: {Configs['models']['available_models']}")
-    if len(args) > 2:
-        raise SyntaxError("Too many arguments were given... Please provide only one model to be trained, or don't provide any if you want to train all the models")
-    else: 
-        model_name = args[1].upper()
+    #         else:
+    #             results_df = results_df.append(default_results, ignore_index = True)
+    #             results_df = results_df.append(optimised_results, ignore_index = True)
 
+    #         print(results_df)
 
-    # --------------------------------------------------------------------------------
-    # ----------------- CONDUCTING THE TESTING PROCESS FOR THE MODELS ----------------
-    # --------------------------------------------------------------------------------
+    #     # Final test for all variables
+    #     all_variables_results = test_all_variables(classifier)
+    #     results_df = results_df.append(all_variables_results, ignore_index = True)
+    #     # Saving the results
+    #     results_df.to_csv(f'{Configs["directories"]["results"]}/results_all.csv', index = False)
 
-    # instantiating the testing class
-    tester = Testing.Testing(model_name)
+    # # CASE 2 - WE WANT TO CONDUCT TESTS FOR A SPECIFIC VARIABLE
+    # else:
 
-    # Loading the optimised and default models
-    default_model = tester.load_default_model()
-    best_model = tester.load_best_model()
-
-    # getting the results of the tests for the default, optimised and all variables models
-    default_results = test_default_models(default_model, n_components_list, n_tests, classifier)
-    optimised_results = test_optimised_model(best_model, n_tests, classifier)
-    all_variables_results = test_all_variables(classifier)
-
-    # Joining all of them into a single dataframe
-    results_df = default_results.append(optimised_results, ignore_index = True)
-    results_df = results_df.append(all_variables_results, ignore_index = True)
-
-    # Saving the results
-    results_df.to_csv(f'{Configs["directories"]["results"]}/results_{model_name}.csv', index = False)
+    #     # Analysing the model that was given:
+    #     if len(args) == 2 and args[1].upper() not in models_list:
+    #         raise SyntaxError(f"The model given is not available... Please provide a model to be trained from the following list: {Configs['models']['available_models']}")
+    #     if len(args) > 2:
+    #         raise SyntaxError("Too many arguments were given... Please provide only one model to be trained, or don't provide any if you want to train all the models")
+    #     else: 
+    #         model_name = args[1].upper()
 
 
+    #     # --------------------------------------------------------------------------------
+    #     # ----------------- CONDUCTING THE TESTING PROCESS FOR THE MODELS ----------------
+    #     # --------------------------------------------------------------------------------
+
+    #     # instantiating the testing class
+    #     tester = Testing.Testing(model_name)
+
+    #     # Loading the optimised and default models
+    #     default_model = tester.load_default_model()
+    #     best_model = tester.load_best_model()
+
+    #     # getting the results of the tests for the default, optimised and all variables models
+    #     default_results = test_default_models(default_model, n_components_list, n_tests, classifier)
+    #     optimised_results = test_optimised_model(best_model, n_tests, classifier)
+    #     all_variables_results = test_all_variables(classifier)
+
+    #     # Joining all of them into a single dataframe
+    #     results_df = default_results.append(optimised_results, ignore_index = True)
+    #     results_df = results_df.append(all_variables_results, ignore_index = True)
+
+    #     # Saving the results
+    #     results_df.to_csv(f'{Configs["directories"]["results"]}/results_{model_name}.csv', index = False)
+
+
+    tester = Testing.Testing('PCA')
+
+    tester.plot_all_components()

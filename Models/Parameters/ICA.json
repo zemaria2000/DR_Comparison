@@ -1,8 +1,8 @@
 {
-   "n_components": "28",
+   "n_components": "44",
    "algorithm": "deflation",
    "whiten": "unit-variance",
    "fun": "exp",
-   "tol": "0.0004011987336417964",
-   "whiten_solver": "svd"
+   "tol": "0.0006155366288833982",
+   "whiten_solver": "eigh"
 }

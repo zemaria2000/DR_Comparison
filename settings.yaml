@@ -6,7 +6,7 @@ models:
   # Epochs only applicable to Deep Learning models
   num_epochs_trials: 5
   num_final_epochs: 5
-  available_models: [PCA, ICA, SVD, RF, AE, NMF, RFE]
+  available_models: [PCA, ICA, SVD, RF, AE, NMF, RFE, LDA]
   # available_models: [PCA, ICA, SVD, LDA, RF, AE, VAE]
   DL_models: [AE, VAE]
   FS_models: [RFE, RF]
