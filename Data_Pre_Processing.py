@@ -4,6 +4,9 @@ import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 import json
+from imblearn.combine import SMOTETomek
+from imblearn.under_sampling import TomekLinks
+from collections import Counter
 
 # Loading the original dataframe
 df = pd.read_csv('Data/OriginalDataset.csv', index_col = 'Unnamed: 0')
@@ -41,6 +44,21 @@ df = df.drop(columns = ['Equipment', 'Test_Results'], axis = 1)
 # Using label encoder to convert the y labels into integer values
 y_classes = LabelEncoder()
 y = y_classes.fit_transform(y)
+
+# %%
+# Balancing the dataset using SMOTE Tomek
+# Assessing the number of samples of each class
+count = Counter(y)
+print(count)
+
+# Defining a strategy to balance the dataset
+strategy = {0: int(count[1]/3), 2: int(count[3]/3)}
+#Balancing the dataset
+resample = SMOTETomek(sampling_strategy = strategy, tomek = TomekLinks(sampling_strategy = 'majority'))
+X, y = resample.fit_resample(X, y)
+
+new_counter = Counter(y)
+# %%
 # Just saving the classes to store in a json file - https://bobbyhadz.com/blog/python-typeerror-object-of-type-int64-is-not-json-serializable
 y_mapping = dict()
 for elem in y_classes.classes_:
@@ -60,7 +78,6 @@ np.savetxt('Data/X_MinMaxScaler.csv', min_max_scaler_data, delimiter = ',')
 np.savetxt('Data/X_Original.csv', X, delimiter = ',')
 np.savetxt('Data/y_LabelEncoder.csv', y, delimiter = ',')
 np.savetxt('Data/y_Original', y, delimiter = ',')
-np.savetxt('Data/y_Binary.csv', y_binary, delimiter = ',')
 df.to_csv('Data/OrganisedOriginalDataset.csv')
 
 
