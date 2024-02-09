@@ -225,7 +225,7 @@ class Testing:
         #     specificity = TN / (TN + FP)
         #     label = i
         aux_series = pd.Series([self.model_name, n_components, mcc], index = ['Model', 'N_components', 'MCC'])
-        df = df.append(aux_series, ignore_index = True)
+        df = pd.concat([df, aux_series.to_frame().T], ignore_index = True, axis = 0)
 
         return df
 
@@ -278,7 +278,7 @@ class Testing:
                 metrics = self.get_metrics(test_y, y_pred, i)
                 metrics.drop('Model', inplace = True)
                 metrics['Classifier'] = classifier_name
-                aux_df = pd.concat([aux_df, metrics], axis = 1)
+                aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
 
             print("Tested for ", i, " components")
             

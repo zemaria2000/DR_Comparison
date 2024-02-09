@@ -60,8 +60,8 @@ def default_component_tests(classifiers_list):
             metrics = tester.get_metrics(test_y, y_pred, i)
             # metrics.drop('Model', inplace = True)
             metrics['Classifier'] = classifier_name
-            
-            aux_df = aux_df.append(metrics, ignore_index = True)
+
+            aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
 
         print("Tested model", model_name, "for", i, "components")
 
@@ -152,7 +152,7 @@ def test_optimised_model(classifiers_list):
         # metrics.drop('Model', inplace = True)
         metrics['Classifier'] = classifier_name
         
-        aux_df = aux_df.append(metrics, ignore_index = True)
+        aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
 
     return aux_df
 
@@ -356,7 +356,7 @@ def multiple_tests(model_type: str, classifiers_list, n_components=None, n_tests
             metrics = tester.get_metrics(test_y, y_pred, n_components)
             metrics.drop('Model', inplace = True)
             metrics['Classifier'] = classifier.__class__.__name__
-            aux_df = aux_df.append(metrics, ignore_index = True)
+            aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
 
             print("Test", i, "for", classifier.__class__.__name__, "with", n_components, "components concluded")
         
@@ -382,38 +382,39 @@ def test_times(classifiers_list, n_tests = 5):
 
         for components in n_components:
 
+            train_times, test_times = [], []
+
+            # Fitting the DR technique
+            tester.fit_DR_technique(dr_model, components)
+
+            # Generate the reduced datasets
+            if model_name == 'AE':
+                train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(dr_model)
+            else:
+                train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(dr_model, components)
+    
+            classifier_name = classifier.__class__.__name__
+
             for i in range(n_tests):
-
-                # Fitting the DR technique
-                tester.fit_DR_technique(dr_model, components)
-
-                # Generate the reduced datasets
-                if model_name == 'AE':
-                    train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(dr_model)
-                else:
-                    train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(dr_model, components)
-        
-                # auxiliary variables
-                attempt = i + 1
-                classifier_name = classifier.__class__.__name__
 
                 # Fitting the model
                 st_train = time.time()
                 classifier.fit(train_X_reduced, train_y)
                 et_train = time.time()
                 elapsed_time_train = et_train - st_train
-                print(f"Attempt {attempt}: Time to fit the classifier {classifier.__class__.__name__} with all variables: {elapsed_time_train}")
+                print(f"Attempt {i+1}: Time to fit the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {elapsed_time_train*1000} ms")
 
                 # Making the predictions
-                st_pred = time.time()
-                y_pred = classifier.predict(test_X_reduced)
-                et_pred = time.time()
-                elapsed_time_pred = et_pred - st_pred
-                print(f"Attempt {attempt}: Time to make the predictions for the classifier {classifier.__class__.__name__} with all variables: {elapsed_time_pred}")
+                # st_pred = time.time()
+                # y_pred = classifier.predict(test_X_reduced)
+                # et_pred = time.time()
+                # elapsed_time_pred = et_pred - st_pred
+                # print(f"Attempt {attempt}: Time to make the predictions for the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {elapsed_time_pred*1000} ms")
 
                 # Storing the times within a dataframe
-                times = pd.Series([attempt, classifier_name, components, elapsed_time_train, elapsed_time_pred], index = ['Attempt no.', 'Classifier', 'N_components', 'Training time', 'Prediction time'])
-                results_df = results_df.append(times, ignore_index = True)
+                times = pd.Series([i+1, classifier_name, components, elapsed_time_train*1000], index = ['Attempt no.', 'Classifier', 'N_components', 'Training time'])
+                results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
+
 
     # # Storing this dataframe
     # if not os.path.exists('./Results/Time_Tests'):
@@ -434,14 +435,14 @@ def plot_times(results_df, classifiers_names):
         os.makedirs('./Results/Plots/Times')
 
     # Removing first column that is not needed
-    results_df.drop('Attempt no.', axis = 1, inplace = True)
+    # results_df.drop('Attempt no.', axis = 1, inplace = True)
     # Storing also this dataframe with all info
     results_df.to_csv(f'./Results/Times/{model_name}_all_times.csv')
 
     # grouping the dataframes
     grouped = results_df.groupby(['Classifier', 'N_components'])
     # Getting their average metrics values
-    avg_grouped = grouped.mean()*1000   # Mean + ms conversion
+    avg_grouped = grouped.mean()  # Mean + ms conversion
 
     plot_markers = ['o', '^', 's', 'D']
     # Plotting the results    
@@ -454,20 +455,20 @@ def plot_times(results_df, classifiers_names):
         plt.ylabel('Training time (ms)')
     plt.savefig(f'./Results/Plots/Times/{model_name}_train_times.svg', dpi = 300)  
     
-    # plot a graph with the prediction times
-    for count, name in enumerate(classifiers_names):
-        plt.subplot(len(classifiers_names), 1, count + 1)
-        plt.plot(avg_grouped.loc[name].index.values, avg_grouped.loc[name].loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
-        plt.legend()
-        plt.xlabel('Number of components')
-        plt.ylabel('Prediction time (ms)')
-    plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
+    # # plot a graph with the prediction times
+    # for count, name in enumerate(classifiers_names):
+    #     plt.subplot(len(classifiers_names), 1, count + 1)
+    #     plt.plot(avg_grouped.loc[name].index.values, avg_grouped.loc[name].loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
+    #     plt.legend()
+    #     plt.xlabel('Number of components')
+    #     plt.ylabel('Prediction time (ms)')
+    # plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
 
     for classifier in classifiers_names:
-        to_save_predictions = avg_grouped.loc[classifier].loc[:, 'Prediction time']
+        # to_save_predictions = avg_grouped.loc[classifier].loc[:, 'Prediction time']
         to_save_training = avg_grouped.loc[classifier].loc[:, 'Training time']
         # Saving both dataframes
-        to_save_predictions.to_csv(f'./Results/Times/{model_name}_{classifier}_pred_times.csv')
+        # to_save_predictions.to_csv(f'./Results/Times/{model_name}_{classifier}_pred_times.csv')
         to_save_training.to_csv(f'./Results/Times/{model_name}_{classifier}_train_times.csv')
 # %%
 
@@ -488,22 +489,27 @@ if __name__ == '__main__':
     dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'LDA']
     # model_name = 'RF'
 
-    for model_name in dr_techniques:
+    # for model_name in dr_techniques:
 
-        # instantiating the class
-        tester = Testing.Testing(model_name)
+    #     # instantiating the class
+    #     tester = Testing.Testing(model_name)
 
-        # Conducting the default model tests
-        default_df = default_component_tests(classifiers_list)
-        plot_default_component_tests(default_df)
-        save_default_component_tests(default_df, classifiers_names)
+    #     # Conducting the default model tests
+    #     default_df = default_component_tests(classifiers_list)
+    #     plot_default_component_tests(default_df)
+    #     save_default_component_tests(default_df, classifiers_names)
 
-        # Conducting the optimised model tests
-        optimised_df = test_optimised_model(classifiers_list)
-        save_test_optimised_model(optimised_df, classifiers_names)
+    #     # Conducting the optimised model tests
+    #     optimised_df = test_optimised_model(classifiers_list)
+    #     save_test_optimised_model(optimised_df, classifiers_names)
 
-        # Conducting the time tests
-        times_df = test_times(classifiers_list, n_tests = 10)
-        plot_times(times_df, classifiers_names)
+    #     print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+    
+    # Getting the training and testing time for 1 DR technique - PCA
+    model_name = 'PCA'    
+    tester = Testing.Testing(model_name)
+    # Conducting the time tests
+    times_df = test_times(classifiers_list, n_tests = 10)
+    plot_times(times_df, classifiers_names)
 
-        print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+   
