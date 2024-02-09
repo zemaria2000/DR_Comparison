@@ -11,14 +11,7 @@ from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
-<<<<<<< HEAD
 import exectimeit
-=======
-from sklearn.model_selection import cross_val_score
-from time import process_time
-import exectimeit.timeit
-from functools import partial
->>>>>>> c9c354728b217149fac8a5488eca71fbc8eca1ca
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -366,7 +359,7 @@ def multiple_tests(model_type: str, classifiers_list, n_components=None, n_tests
             aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
 
             print("Test", i, "for", classifier.__class__.__name__, "with", n_components, "components concluded")
-
+        
         print("Tested model", model_name, "for", n_components, "components")
 
     return aux_df
@@ -376,10 +369,12 @@ def test_times(classifiers_list, n_tests = 5):
 
     # Getting the training and testing datasets
     train_X, test_X, train_y, test_y = tester.pre_processing()
+          
     # Defining a set of number of components
     n_components = np.arange(2, train_X.shape[1] + 1, 1)
-    # auxiliar dataframe
+
     results_df = pd.DataFrame()
+
     # Load the default model
     dr_model = tester.load_default_model()
 
@@ -387,11 +382,8 @@ def test_times(classifiers_list, n_tests = 5):
 
         classifier_name = classifier.__class__.__name__
 
-<<<<<<< HEAD
         for components in tqdm.tqdm(n_components, leave = False):
 
-=======
->>>>>>> c9c354728b217149fac8a5488eca71fbc8eca1ca
             # Fitting the DR technique
             tester.fit_DR_technique(dr_model, components)
 
@@ -400,7 +392,6 @@ def test_times(classifiers_list, n_tests = 5):
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(dr_model)
             else:
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(dr_model, components)
-<<<<<<< HEAD
 
             # Average time for the fitting
             avg_train_time, avg_train_std, _ = exectimeit.timeit.timeit(n_tests, classifier.fit, train_X_reduced, train_y)
@@ -410,51 +401,12 @@ def test_times(classifiers_list, n_tests = 5):
             # Storing the times within a dataframe
             times = pd.Series([classifier_name, components, avg_train_time*1000, avg_train_std*1000, avg_pred_time*1000, avg_pred_std*1000], index = ['Classifier', 'N_components', 'Training time', 'Training std', 'Testing time', 'Testing std'])
             results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
-=======
 
-            classifier_name = classifier.__class__.__name__
 
-            # Defining a function that fits the model
-            def model_fit(X, y, classifier):
-                classifier.fit(X, y)
-                # return classifier
-
-            # Defining a function that predicts the model
-            def model_pred(X, classifier):
-                preds = classifier.predict(X)
-                return preds
-            
-            # Creating a function with fixed arguments
-            model_fit = partial(model_fit, train_X_reduced, train_y, classifier)
-            # Measuring the time to fit the model
-            mean_train_time, variation, classifier = exectimeit.timeit.timeit(n_tests, model_fit)
-            print(f"Average time to fit the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {mean_train_time*1000} ms")
-            
-            # Creating a function with fixed arguments
-            model_pred = partial(model_pred, test_X_reduced, classifier)
-            # Measuring the time to make the predictions on test data
-            mean_pred_time, variation, classifier = exectimeit.timeit.timeit(n_tests, model_pred)
-            print(f"Average time to make the predictions for the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {mean_pred_time*1000} ms")
->>>>>>> c9c354728b217149fac8a5488eca71fbc8eca1ca
-
-            # Storing the times within a dataframe
-            times = pd.Series([classifier_name, components, mean_train_time*1000, mean_pred_time], index = ['Classifier', 'N_components', 'Training time', 'Prediction time'])
-            results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
-
-<<<<<<< HEAD
     # Storing this dataframe
     if not os.path.exists('./Results/Times'):
         os.makedirs('./Results/Times')
     results_df.to_csv(f'./Results/Times/{model_name}_Times.csv', index = False)
-=======
-                # time.sleep(1)
-    # # Storing this dataframe
-    # if not os.path.exists('./Results/Time_Tests'):
-    #     os.makedirs('./Results/Time_Tests')
-    # results_df.to_csv(f'./Results/Time_Tests/{model_name}_Times.csv', index = False)
-
-    # print(results_df)
->>>>>>> c9c354728b217149fac8a5488eca71fbc8eca1ca
 
     return results_df
 
@@ -485,11 +437,7 @@ def plot_times(results_df, classifiers_names):
     # plot a graph with the prediction times
     for count, name in enumerate(classifiers_names):
         plt.subplot(len(classifiers_names), 1, count + 1)
-<<<<<<< HEAD
         plt.plot(grouped.get_group(name).loc[:, 'N_components'], agrouped.get_group(name).loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
-=======
-        plt.plot(avg_grouped.loc[name].index.values, avg_grouped.loc[name].loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
->>>>>>> c9c354728b217149fac8a5488eca71fbc8eca1ca
         plt.legend()
         plt.xlabel('Number of components')
         plt.ylabel('Prediction time (ms)')
@@ -507,7 +455,7 @@ if __name__ == '__main__':
     rf = RF()
     
     # generate a list with the classifiers we wish to test
-    classifiers_list = [knn, logreg, rf, mlp]
+    classifiers_list = [logreg, knn, rf, mlp]
     classifiers_names = [x.__class__.__name__ for x in classifiers_list]
 
     # Choosing the DR technique
@@ -528,7 +476,7 @@ if __name__ == '__main__':
     #     optimised_df = test_optimised_model(classifiers_list)
     #     save_test_optimised_model(optimised_df, classifiers_names)
 
-    # #     print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+    #     print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
     
     # Getting the training and testing time for 1 DR technique - PCA
     model_name = 'PCA'    
