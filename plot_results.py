@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns  
 import json, time, os
-import tqdm
+import tqdm, yaml
 from matplotlib.patches import Circle, RegularPolygon
 from matplotlib.path import Path
 from matplotlib.projections.polar import PolarAxes
@@ -12,6 +12,7 @@ from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 import exectimeit
+import tensorflow as tf
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -22,48 +23,87 @@ from sklearn.ensemble import RandomForestClassifier as RF
 # Classes
 from Classes import Testing
 
+
+with open('settings.yaml') as file:
+    Configs = yaml.full_load(file)
+
+validation_split = Configs['models']['validation_split']
+
 # Conduct tests for the default models, with all the possible number of components
 def default_component_tests(classifiers_list):
 
     # Getting the training and testing datasets
     train_X, test_X, train_y, test_y = tester.pre_processing()
-
     # Load the default model
     model = tester.load_default_model()
     # Define an array with the possible numer of components
     n_components = np.arange(2, train_X.shape[1], 1)
 
-    ## PLOTING THE RESULTS FROM THE DEFAULT MODELS ##
-
     # auxiliary df
     aux_df = pd.DataFrame()
-    # Iterate over all components for all classifiers
-    # for i in n_components:
-    for i in tqdm.tqdm(n_components):
 
-        # Fitting the DR technique
-        tester.fit_DR_technique(model, i)
-
-        # Generate the reduced datasets
-        if model_name == 'AE':
-            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(model)
-        else:
-            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(model, i)
+    # Process if we have an autoencoder
+    if model_name == 'AE':
         
-        for classifier in tqdm.tqdm(classifiers_list):
+        dims = [[train_X.shape[1], 32, 16, 8, 4, 2],
+                [train_X.shape[1], 32, 16, 8, 4],
+                [train_X.shape[1], 32, 16, 8],
+                [train_X.shape[1], 32, 16],
+                [train_X.shape[1], 32]]
+        
+        for dim in dims:
             
-            # Get the classifier's name
-            classifier_name = classifier.__class__.__name__
-            # Fitting the classifier
-            classifier.fit(train_X_reduced, train_y)
-            # Make the predictions
-            y_pred = classifier.predict(test_X_reduced)
-            # Evaluate the model - get a dataframe with the metrics for each class of data (we have 4 classes, so each dataframe as 4 rows, 1 relative to each class)
-            metrics = tester.get_metrics(test_y, y_pred, i)
-            # metrics.drop('Model', inplace = True)
-            metrics['Classifier'] = classifier_name
+            print(dim)
+            # Build the autoencoder
+            ae = tester.build_ae(dim)
 
-            aux_df = pd.concat([aux_df, metrics.to_frame().T], ignore_index = True, axis = 0)
+            # Fitting the autoencoder
+            ae = tester.fit_DR_technique(ae, dim)
+            encoder = tf.keras.Model(ae.input, ae.layers[-2].output)
+            print(encoder.summary())
+
+            # Generate the reduced datasets
+            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(model)
+
+            for classifier in tqdm.tqdm(classifiers_list):
+                
+                # Get the classifier's name
+                classifier_name = classifier.__class__.__name__
+                # Fitting the classifier
+                classifier.fit(train_X_reduced, train_y)
+                # Make the predictions
+                y_pred = classifier.predict(test_X_reduced)
+                # Evaluate the model - get a dataframe with the metrics for each class of data (we have 4 classes, so each dataframe as 4 rows, 1 relative to each class)
+                metrics = tester.get_metrics(test_y, y_pred, dim[-1])
+                # metrics.drop('Model', inplace = True)
+                metrics['Classifier'] = classifier_name
+
+                aux_df = pd.concat([aux_df, metrics.to_frame().T], ignore_index = True, axis = 0)
+   
+    # Process if we have any other model
+    else:
+        # Iterate over all components for all classifiers
+        for i in tqdm.tqdm(n_components):
+
+            # Fitting the DR technique
+            tester.fit_DR_technique(model, i)
+
+            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(model, i)
+            
+            for classifier in tqdm.tqdm(classifiers_list):
+                
+                # Get the classifier's name
+                classifier_name = classifier.__class__.__name__
+                # Fitting the classifier
+                classifier.fit(train_X_reduced, train_y)
+                # Make the predictions
+                y_pred = classifier.predict(test_X_reduced)
+                # Evaluate the model - get a dataframe with the metrics for each class of data (we have 4 classes, so each dataframe as 4 rows, 1 relative to each class)
+                metrics = tester.get_metrics(test_y, y_pred, i)
+                # metrics.drop('Model', inplace = True)
+                metrics['Classifier'] = classifier_name
+
+                aux_df = pd.concat([aux_df, metrics.to_frame().T], ignore_index = True, axis = 0)
 
     return aux_df
 
@@ -365,7 +405,7 @@ def multiple_tests(model_type: str, classifiers_list, n_components=None, n_tests
     return aux_df
 
 # Conduct multiple tests to assess the training and testing times for each classifier - depending on the number of components
-def test_times(classifiers_list, n_tests = 5):
+def test_classifier_times(classifiers_list, n_tests = 5):
 
     # Getting the training and testing datasets
     train_X, test_X, train_y, test_y = tester.pre_processing()
@@ -402,7 +442,6 @@ def test_times(classifiers_list, n_tests = 5):
             times = pd.Series([classifier_name, components, avg_train_time*1000, avg_train_std*1000, avg_pred_time*1000, avg_pred_std*1000], index = ['Classifier', 'N_components', 'Training time', 'Training std', 'Testing time', 'Testing std'])
             results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
 
-
     # Storing this dataframe
     if not os.path.exists('./Results/Times'):
         os.makedirs('./Results/Times')
@@ -410,9 +449,8 @@ def test_times(classifiers_list, n_tests = 5):
 
     return results_df
 
-
 # Function that plots the results from the time tests
-def plot_times(results_df, classifiers_names):
+def plot_classifier_times(results_df, classifiers_names):
 
     # Storing the time tests on a specific folder
     if not os.path.exists('./Results/Times'):
@@ -437,11 +475,61 @@ def plot_times(results_df, classifiers_names):
     # plot a graph with the prediction times
     for count, name in enumerate(classifiers_names):
         plt.subplot(len(classifiers_names), 1, count + 1)
-        plt.plot(grouped.get_group(name).loc[:, 'N_components'], agrouped.get_group(name).loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
+        plt.plot(grouped.get_group(name).loc[:, 'N_components'], grouped.get_group(name).loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
         plt.legend()
         plt.xlabel('Number of components')
         plt.ylabel('Prediction time (ms)')
     plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
+
+# Function that assesses the time for a certain DR technique to fit and predict the data
+def test_DR_techinque_times(classifiers_list, n_tests = 5):
+
+    # Getting the training and testing datasets
+    train_X, test_X, train_y, test_y = tester.pre_processing()
+    # Auxiliary dataframe
+    results_df = pd.DataFrame()
+
+    if model_name == 'AE':
+        # Defining a set of number of components
+        n_components = [[train_X.shape[1], 32, 16, 8, 4, 2],
+                [train_X.shape[1], 32, 16, 8, 4],
+                [train_X.shape[1], 32, 16, 8],
+                [train_X.shape[1], 32, 16],
+                [train_X.shape[1], 32]]
+        pass
+
+    # Tests only conducted for the feature extraction models
+    elif model_name not in Configs['models']['FS_models']:
+
+        # Load the default model
+        dr_model = tester.load_default_model()
+        # Defining a set of number of components
+        n_components = np.arange(2, train_X.shape[1] + 1, 1)
+   
+        for component in tqdm.tqdm(n_components):
+            # Setting the number of comoponents for the model, if possible
+            try:
+                dr_model.set_params(n_components = component)
+            except:
+                pass
+
+            # Fitting times for feature extraction techniques
+            fit_time, fit_std, _ = exectimeit.timeit.timeit(dr_model.fit, train_X)
+            # Prediction times for feature extraction techniques
+            predict_train_time, predict_train_std, _ = exectimeit.timeit.timeit(n_tests, dr_model.transform, train_X)
+            predict_test_time, predict_test_std, _ = exectimeit.timeit.timeit(n_tests, dr_model.transform, test_X)
+
+            # Storing the times within a dataframe
+            times = pd.Series([model_name, component, fit_time*1000, fit_std*1000, predict_train_time*1000, predict_train_std*1000, predict_test_time*1000, predict_test_std*1000], index = ['Classifier', 'N_components', 'Fit time', 'Fit std', 'Pred train time', 'Pred train std std', 'Pred test time', 'Pred test std'])
+            results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
+
+
+    # Storing this dataframe
+    if not os.path.exists('./Results/Times/DR'):
+        os.makedirs('./Results/Times/DR')
+    results_df.to_csv(f'./Results/Times/DR/{model_name}_Times.csv', index = False)
+
+    return results_df
 
 # %%
 
@@ -462,27 +550,24 @@ if __name__ == '__main__':
     dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'LDA']
     # model_name = 'RF'
 
-    # for model_name in dr_techniques:
+    for model_name in dr_techniques:
 
-    #     # instantiating the class
-    #     tester = Testing.Testing(model_name)
+        # instantiating the class
+        tester = Testing.Testing(model_name)
 
-    #     # Conducting the default model tests
-    #     default_df = default_component_tests(classifiers_list)
-    #     plot_default_component_tests(default_df)
-    #     save_default_component_tests(default_df, classifiers_names)
+        # Conducting the default model tests
+        default_df = default_component_tests(classifiers_list)
+        plot_default_component_tests(default_df)
+        save_default_component_tests(default_df, classifiers_names)
 
-    #     # Conducting the optimised model tests
-    #     optimised_df = test_optimised_model(classifiers_list)
-    #     save_test_optimised_model(optimised_df, classifiers_names)
+        # Conducting the optimised model tests
+        optimised_df = test_optimised_model(classifiers_list)
+        save_test_optimised_model(optimised_df, classifiers_names)
 
-    #     print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+        # Conducting the classifier time tests
+        times_df = test_classifier_times(classifiers_list, n_tests = 5)
+        plot_classifier_times(times_df, classifiers_names)
+        print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
     
-    # Getting the training and testing time for 1 DR technique - PCA
-    model_name = 'PCA'    
-    tester = Testing.Testing(model_name)
-    # Conducting the time tests
-    times_df = test_times(classifiers_list, n_tests = 5)
-    # plot_times(times_df, classifiers_names)
 
    
