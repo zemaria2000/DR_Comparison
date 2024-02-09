@@ -4,12 +4,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns  
 import json, time, os
+import tqdm
 from matplotlib.patches import Circle, RegularPolygon
 from matplotlib.path import Path
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
+import exectimeit
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -37,7 +39,7 @@ def default_component_tests(classifiers_list):
     aux_df = pd.DataFrame()
     # Iterate over all components for all classifiers
     # for i in n_components:
-    for i in n_components:
+    for i in tqdm.tqdm(n_components):
 
         # Fitting the DR technique
         tester.fit_DR_technique(model, i)
@@ -48,7 +50,7 @@ def default_component_tests(classifiers_list):
         else:
             train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(model, i)
         
-        for classifier in classifiers_list:
+        for classifier in tqdm.tqdm(classifiers_list):
             
             # Get the classifier's name
             classifier_name = classifier.__class__.__name__
@@ -61,9 +63,7 @@ def default_component_tests(classifiers_list):
             # metrics.drop('Model', inplace = True)
             metrics['Classifier'] = classifier_name
 
-            aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
-
-        print("Tested model", model_name, "for", i, "components")
+            aux_df = pd.concat([aux_df, metrics.to_frame().T], ignore_index = True, axis = 0)
 
     return aux_df
 
@@ -378,11 +378,11 @@ def test_times(classifiers_list, n_tests = 5):
     # Load the default model
     dr_model = tester.load_default_model()
 
-    for classifier in classifiers_list:
+    for classifier in tqdm.tqdm(classifiers_list):
 
-        for components in n_components:
+        classifier_name = classifier.__class__.__name__
 
-            train_times, test_times = [], []
+        for components in tqdm.tqdm(n_components, leave = False):
 
             # Fitting the DR technique
             tester.fit_DR_technique(dr_model, components)
@@ -392,38 +392,24 @@ def test_times(classifiers_list, n_tests = 5):
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(dr_model)
             else:
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(dr_model, components)
-    
-            classifier_name = classifier.__class__.__name__
 
-            for i in range(n_tests):
+            # Average time for the fitting
+            avg_train_time, avg_train_std, _ = exectimeit.timeit.timeit(n_tests, classifier.fit, train_X_reduced, train_y)
+            # Average time for the predictions
+            avg_pred_time, avg_pred_std, _ = exectimeit.timeit.timeit(n_tests, classifier.predict, test_X_reduced)
 
-                # Fitting the model
-                st_train = time.time()
-                classifier.fit(train_X_reduced, train_y)
-                et_train = time.time()
-                elapsed_time_train = et_train - st_train
-                print(f"Attempt {i+1}: Time to fit the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {elapsed_time_train*1000} ms")
-
-                # Making the predictions
-                # st_pred = time.time()
-                # y_pred = classifier.predict(test_X_reduced)
-                # et_pred = time.time()
-                # elapsed_time_pred = et_pred - st_pred
-                # print(f"Attempt {attempt}: Time to make the predictions for the classifier {classifier.__class__.__name__} with {components} variables using {model_name} technique: {elapsed_time_pred*1000} ms")
-
-                # Storing the times within a dataframe
-                times = pd.Series([i+1, classifier_name, components, elapsed_time_train*1000], index = ['Attempt no.', 'Classifier', 'N_components', 'Training time'])
-                results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
+            # Storing the times within a dataframe
+            times = pd.Series([classifier_name, components, avg_train_time*1000, avg_train_std*1000, avg_pred_time*1000, avg_pred_std*1000], index = ['Classifier', 'N_components', 'Training time', 'Training std', 'Testing time', 'Testing std'])
+            results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
 
 
-    # # Storing this dataframe
-    # if not os.path.exists('./Results/Time_Tests'):
-    #     os.makedirs('./Results/Time_Tests')
-    # results_df.to_csv(f'./Results/Time_Tests/{model_name}_Times.csv', index = False)
-
-    # print(results_df)
+    # Storing this dataframe
+    if not os.path.exists('./Results/Times'):
+        os.makedirs('./Results/Times')
+    results_df.to_csv(f'./Results/Times/{model_name}_Times.csv', index = False)
 
     return results_df
+
 
 # Function that plots the results from the time tests
 def plot_times(results_df, classifiers_names):
@@ -434,50 +420,37 @@ def plot_times(results_df, classifiers_names):
     if not os.path.exists('./Results/Plots/Times'):
         os.makedirs('./Results/Plots/Times')
 
-    # Removing first column that is not needed
-    # results_df.drop('Attempt no.', axis = 1, inplace = True)
-    # Storing also this dataframe with all info
-    results_df.to_csv(f'./Results/Times/{model_name}_all_times.csv')
-
     # grouping the dataframes
-    grouped = results_df.groupby(['Classifier', 'N_components'])
-    # Getting their average metrics values
-    avg_grouped = grouped.mean()  # Mean + ms conversion
+    grouped = results_df.groupby(['Classifier'])
 
     plot_markers = ['o', '^', 's', 'D']
     # Plotting the results    
     # plot a graph with the training times
     for count, name in enumerate(classifiers_names):
         plt.subplot(len(classifiers_names), 1, count + 1)
-        plt.plot(avg_grouped.loc[name].index.values, avg_grouped.loc[name].loc[:, 'Training time'].values, marker = plot_markers[count], label = name)
+        plt.plot(grouped.get_group(name).loc[:, 'N_components'], grouped.get_group(name).loc[:, 'Training time'], marker = plot_markers[count], label = name)
         plt.legend()
         plt.xlabel('Number of components')
         plt.ylabel('Training time (ms)')
     plt.savefig(f'./Results/Plots/Times/{model_name}_train_times.svg', dpi = 300)  
     
-    # # plot a graph with the prediction times
-    # for count, name in enumerate(classifiers_names):
-    #     plt.subplot(len(classifiers_names), 1, count + 1)
-    #     plt.plot(avg_grouped.loc[name].index.values, avg_grouped.loc[name].loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
-    #     plt.legend()
-    #     plt.xlabel('Number of components')
-    #     plt.ylabel('Prediction time (ms)')
-    # plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
+    # plot a graph with the prediction times
+    for count, name in enumerate(classifiers_names):
+        plt.subplot(len(classifiers_names), 1, count + 1)
+        plt.plot(grouped.get_group(name).loc[:, 'N_components'], agrouped.get_group(name).loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
+        plt.legend()
+        plt.xlabel('Number of components')
+        plt.ylabel('Prediction time (ms)')
+    plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
 
-    for classifier in classifiers_names:
-        # to_save_predictions = avg_grouped.loc[classifier].loc[:, 'Prediction time']
-        to_save_training = avg_grouped.loc[classifier].loc[:, 'Training time']
-        # Saving both dataframes
-        # to_save_predictions.to_csv(f'./Results/Times/{model_name}_{classifier}_pred_times.csv')
-        to_save_training.to_csv(f'./Results/Times/{model_name}_{classifier}_train_times.csv')
 # %%
 
 
 if __name__ == '__main__':
    
     # Instantiate all classifiers
-    mlp = MLP()
-    logreg = LogReg()
+    mlp = MLP(max_iter = 5000)
+    logreg = LogReg(max_iter = 5000)
     knn = kNN()
     rf = RF()
     
@@ -509,7 +482,7 @@ if __name__ == '__main__':
     model_name = 'PCA'    
     tester = Testing.Testing(model_name)
     # Conducting the time tests
-    times_df = test_times(classifiers_list, n_tests = 10)
-    plot_times(times_df, classifiers_names)
+    times_df = test_times(classifiers_list, n_tests = 5)
+    # plot_times(times_df, classifiers_names)
 
    
