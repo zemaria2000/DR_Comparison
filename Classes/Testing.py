@@ -3,7 +3,7 @@ import pandas as pd
 import os, yaml, pickle, sys
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
-from sklearn.decomposition import PCA, FastICA
+from sklearn.decomposition import PCA, FastICA, NMF
 from sklearn.decomposition import TruncatedSVD as SVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
@@ -51,7 +51,9 @@ class Testing:
         if self.model_name == 'PCA':
             default_model = PCA()
         elif self.model_name == 'ICA':
-            default_model = FastICA()
+            default_model = FastICA(max_iter = 20000)
+        elif self.model_name == 'NMF':
+            default_model = NMF(max_iter = 10000)
         elif self.model_name == 'SVD':
             default_model = SVD()
         elif self.model_name == 'LDA':
@@ -210,8 +212,10 @@ class Testing:
         f1 = f1_score(y_true, y_pred, average = 'weighted')
         acc = accuracy_score(y_true, y_pred)
         prec = precision_score(y_true, y_pred, average = 'weighted')
+        recall = recall_score(y_true, y_pred, average = 'weighted')
 
-        aux_series = pd.Series([self.model_name, n_components, mcc, f1, acc, prec], index = ['Model', 'N_components', 'MCC', 'F1', 'Accuracy', 'Precision'])
+        aux_series = pd.Series([self.model_name, n_components, mcc, f1, acc, prec, recall], index = ['Model', 'N_components', 'MCC', 'F1', 'Accuracy', 'Precision', 'Recall'])
+        
         return aux_series
 
     # Method that allows to save the results
