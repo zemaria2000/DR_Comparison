@@ -1,4 +1,5 @@
 deap==1.4.1
+imblearn==0.0
 keras_tuner==1.4.5
 matplotlib==3.8.0
 numpy==1.26.4
@@ -9,4 +10,5 @@ scikit_learn==1.3.2
 scikit_optimize==0.9.0
 seaborn==0.13.2
 tensorflow==2.10.0
+tqdm==4.62.3
 git+https://github.com/mariolpantunes/exectimeit@main#egg=exectimeit
