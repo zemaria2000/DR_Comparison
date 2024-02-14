@@ -51,13 +51,13 @@ class Testing:
         if self.model_name == 'PCA':
             default_model = PCA()
         elif self.model_name == 'ICA':
-            default_model = FastICA(max_iter = 20000)
+            default_model = FastICA(max_iter = 5000, tol = 5e-2)
         elif self.model_name == 'NMF':
-            default_model = NMF(max_iter = 10000)
+            default_model = NMF(max_iter = 5000, tol = 5e-2)
         elif self.model_name == 'SVD':
             default_model = SVD()
         elif self.model_name == 'LDA':
-            default_model = LDA()
+            default_model = LDA(tol = 5e-2)
         elif self.model_name == 'RF':
             default_model = RF()
         elif self.model_name == 'RFE':
