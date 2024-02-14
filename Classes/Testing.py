@@ -8,6 +8,7 @@ from sklearn.decomposition import TruncatedSVD as SVD
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn.feature_selection import RFECV
+from sklearn.tree import DecisionTreeClassifier as DT
 import tensorflow as tf
 from tensorflow.keras import backend as K
 import matplotlib.pyplot as plt
@@ -39,9 +40,9 @@ class Testing:
 
     # Data Preprocessing    
     def pre_processing(self):
-        if self.model_name not in self.DL_models:
+        if self.model_name not in self.DL_models and self.model_name != 'NMF':
             return train_test_split(self.X, self.y, test_size = 1-self.train_split, random_state = 42, shuffle = True)
-        if self.model_name == 'AE':
+        else:
             return train_test_split(self.X_DL, self.y, test_size = 1-self.train_split, random_state = 42, shuffle = True)
 
 
@@ -61,7 +62,7 @@ class Testing:
         elif self.model_name == 'RF':
             default_model = RF()
         elif self.model_name == 'RFE':
-            default_model = RFECV()
+            default_model = RFECV(estimator = DT())
         elif self.model_name == 'AE':
             default_model = self.build_ae([self.X.shape[1], 32, 16, 8, 4])
         
@@ -141,7 +142,7 @@ class Testing:
             model.fit(train_X, train_X, epochs = 5, validation_split = self.validation_split, shuffle = True)
 
         else:
-            if self.model_name == 'RF' or self.model_name == 'RFE':
+            if self.model_name == 'RF' or self.model_name == 'RFE' or self.model_name == 'LDA':
                 model.fit(train_X, train_y)
             else:
                 model.fit(train_X)
