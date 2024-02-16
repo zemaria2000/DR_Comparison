@@ -13,6 +13,8 @@ from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 import exectimeit
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -28,6 +30,42 @@ with open('settings.yaml') as file:
     Configs = yaml.full_load(file)
 validation_split = Configs['models']['validation_split']
 epochs = Configs['models']['num_final_epochs']
+
+def default_tests(classifiers_list):
+    """ should return the MCC value for the default dataset, using the classifiers
+    from the 'classifiers_list' argument """
+
+    # Loading the dataset
+    X = pd.read_csv('./Data/X_StandardScaler.csv')
+    y = pd.read_csv('./Data/y_LabelEncoder.csv')
+
+    # Generating the training and testing datasets
+    train_X, test_X, train_y, test_y = train_test_split(X, y, test_size = 0.1, random_state = 42)
+
+    # auxiliary df
+    aux_df = pd.DataFrame()
+
+    for classifier in classifiers_list:
+
+        classifier_name = classifier.__class__.__name__
+
+        # Fitting the classifier
+        classifier.fit(train_X, train_y)
+
+        # Make the predictions
+        y_pred = classifier.predict(test_X)
+
+        # Evaluate the model
+        mcc = matthews_corrcoef(test_y, y_pred)
+        f1 = f1_score(test_y, y_pred, average = 'weighted')
+        acc = accuracy_score(test_y, y_pred)
+        prec = precision_score(test_y, y_pred, average = 'weighted')
+        recall = recall_score(test_y, y_pred, average = 'weighted')
+        aux_series = pd.Series([classifier_name, mcc, f1, acc, prec, recall], index = ['Classifier', 'MCC', 'F1', 'Accuracy', 'Precision', 'Recall'])
+
+        aux_df = pd.concat([aux_df, aux_series.to_frame().T], ignore_index = True, axis = 0)
+
+    aux_df.to_csv(f'./Results/Default_Tests/Default.csv')
 
 # Conduct tests for the default models, with all the possible number of components
 def default_component_tests(classifiers_list):
@@ -62,7 +100,7 @@ def default_component_tests(classifiers_list):
             print(encoder.summary())
 
             # Generate the reduced datasets
-            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(model)
+            train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(encoder)
 
             for classifier in tqdm.tqdm(classifiers_list, leave = False):
                 
@@ -460,6 +498,37 @@ def test_classifier_times(classifiers_list, n_tests = 5):
 
     return results_df
 
+def default_classifier_times(classifiers_list, n_tests = 5):
+
+    # Loading the dataset
+    X = pd.read_csv('./Data/X_StandardScaler.csv')
+    y = pd.read_csv('./Data/y_LabelEncoder.csv')
+
+    # Generating the training and testing datasets
+    train_X, test_X, train_y, test_y = train_test_split(X, y, test_size = 0.2, random_state = 42)
+
+    results_df = pd.DataFrame()
+
+    for classifier in tqdm.tqdm(classifiers_list):
+
+        classifier_name = classifier.__class__.__name__
+
+        # Average time for the fitting
+        avg_train_time, avg_train_std, _ = exectimeit.timeit.timeit(n_tests, classifier.fit, train_X, train_y)
+        # Average time for the predictions
+        avg_pred_time, avg_pred_std, _ = exectimeit.timeit.timeit(n_tests, classifier.predict, test_X)
+
+        # Storing the times within a dataframe
+        times = pd.Series([classifier_name, avg_train_time*1000, avg_train_std*1000, avg_pred_time*1000, avg_pred_std*1000], index = ['Classifier', 'Training time', 'Training std', 'Testing time', 'Testing std'])
+        results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
+
+    # Storing this dataframe
+    if not os.path.exists('./Results/Times'):
+        os.makedirs('./Results/Times')
+    results_df.to_csv(f'./Results/Times/Default_Times.csv', index = False)
+
+    return results_df
+
 # Function that plots the results from the time tests
 def plot_classifier_times(results_df, classifiers_names):
 
@@ -603,7 +672,7 @@ if __name__ == '__main__':
     classifiers_names = [x.__class__.__name__ for x in classifiers_list]
 
     # Choosing the DR technique
-    dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'LDA']
+    dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'AE']
     # model_name = 'RF'
 
     for model_name in dr_techniques:
@@ -611,14 +680,14 @@ if __name__ == '__main__':
         # instantiating the class
         tester = Testing.Testing(model_name)
 
-        # # Conducting the default model tests
-        # default_df = default_component_tests(classifiers_list)
-        # plot_default_component_tests(default_df)
-        # save_default_component_tests(default_df, classifiers_names)
+        # Conducting the default model tests
+        default_df = default_component_tests(classifiers_list)
+        plot_default_component_tests(default_df)
+        save_default_component_tests(default_df, classifiers_names)
 
-        # # Conducting the optimised model tests
-        # optimised_df = test_optimised_model(classifiers_list)
-        # save_test_optimised_model(optimised_df, classifiers_names)
+        # Conducting the optimised model tests
+        optimised_df = test_optimised_model(classifiers_list)
+        save_test_optimised_model(optimised_df, classifiers_names)
 
         # # Conducting the classifier time tests
         # times_df = test_classifier_times(classifiers_list, n_tests = 5)
