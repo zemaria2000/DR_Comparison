@@ -13,12 +13,8 @@ from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 import exectimeit
 import tensorflow as tf
-<<<<<<< HEAD
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
-=======
-import warnings
->>>>>>> 3c5ff7bd782d32f3995394400741b3049c161219
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -464,7 +460,8 @@ def test_classifier_times(classifiers_list, n_tests = 5):
     train_X, test_X, train_y, test_y = tester.pre_processing()
           
     # Defining a set of number of components
-    n_components = np.arange(2, train_X.shape[1] + 1, 1)
+    # n_components = np.arange(2, train_X.shape[1] + 1, 1)
+    n_components = [2, 5, 10, 20, 30, 40]
 
     results_df = pd.DataFrame()
 
@@ -481,7 +478,7 @@ def test_classifier_times(classifiers_list, n_tests = 5):
             tester.fit_DR_technique(dr_model, components)
 
             # Generate the reduced datasets
-            if model_name == 'AE':
+            if model_name == 'AE' or model_name == 'NMF':
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_DL(dr_model)
             else:
                 train_X_reduced, test_X_reduced, train_y, test_y = tester.generate_reduced_datasets_nonDL(dr_model, components)
@@ -526,10 +523,26 @@ def default_classifier_times(classifiers_list, n_tests = 5):
         times = pd.Series([classifier_name, avg_train_time*1000, avg_train_std*1000, avg_pred_time*1000, avg_pred_std*1000], index = ['Classifier', 'Training time', 'Training std', 'Testing time', 'Testing std'])
         results_df= pd.concat([results_df, times.to_frame().T], ignore_index = False, axis = 0)
 
+    # Further processing the DataFrame
+    final_df = pd.DataFrame()
+    for row in results_df.iterrows():
+
+        row = row[1]
+        classifier = row['Classifier']
+        a = round(float(row['Training time']), 3)
+        b = round(float(row['Training std']), 3)
+
+        c = round(float(row['Testing time']), 3)
+        d = round(float(row['Testing std']), 3)
+
+        aux_series = pd.Series([classifier, str(a) + '+' + str(b), str(c) + '+' + str(d)], index = ['Classifier', 'Training time', 'Testing time'])
+        final_df = pd.concat([final_df, aux_series.to_frame().T], axis = 0)
+
+
     # Storing this dataframe
     if not os.path.exists('./Results/Times'):
         os.makedirs('./Results/Times')
-    results_df.to_csv(f'./Results/Times/Default_Times.csv', index = False)
+    results_df.to_csv(f'./Results/Times/Default_Classifier_Times.csv', index = False)
 
     return results_df
 
@@ -680,12 +693,8 @@ if __name__ == '__main__':
     classifiers_names = [x.__class__.__name__ for x in classifiers_list]
 
     # Choosing the DR technique
-<<<<<<< HEAD
     dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'AE']
     # model_name = 'RF'
-=======
-    dr_techniques = ['PCA', 'SVD', 'RF', 'RFE', 'LDA', 'ICA', 'NMF']
->>>>>>> 3c5ff7bd782d32f3995394400741b3049c161219
 
     # 1. Performance testing
     for model_name in dr_techniques:
@@ -702,6 +711,9 @@ if __name__ == '__main__':
         optimised_df = test_optimised_model(classifiers_list)
         save_test_optimised_model(optimised_df, classifiers_names)
 
+
+    dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE']
+
     # 2. Classifier time testing
     for model_name in dr_techniques:
 
@@ -712,7 +724,6 @@ if __name__ == '__main__':
         times_df = test_classifier_times(classifiers_list, n_tests = 5)
         plot_classifier_times(times_df, classifiers_names)
         print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
-
 
 
     # 3. Some DR methods' time testing
