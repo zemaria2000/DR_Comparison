@@ -1,7 +1,7 @@
 # Main settings to train each model
 models:
   num_trials: 250
-  train_split: 0.8
+  train_split: 0.9
   validation_split: 0.1
   # Epochs only applicable to Deep Learning models
   num_epochs_trials: 5

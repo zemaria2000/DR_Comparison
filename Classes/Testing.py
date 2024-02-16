@@ -108,7 +108,7 @@ class Testing:
         # decoder_input = tf.keras.Input(shape = (dims[-1], ), name = 'decoder_input')
         encoder_output = decoder_input = x
         # Defining our decoder
-        for i in range(n_layers - 1, 0, -1):
+        for i in range(n_layers, 0, -1):
             x = tf.keras.layers.Dense(dims[i], activation = 'swish', kernel_initializer = initialiser, name = f'decoder_{i}')(x)
         # Defining our decoder output
         output = tf.keras.layers.Dense(dims[0], activation = 'swish', name = 'output')(x)
@@ -139,7 +139,7 @@ class Testing:
             pass
 
         if self.model_name in self.DL_models:
-            model.fit(train_X, train_X, epochs = 5, validation_split = self.validation_split, shuffle = True)
+            model.fit(train_X, train_X, epochs = 100, validation_split = self.validation_split, batch_size = 64)
 
         else:
             if self.model_name == 'RF' or self.model_name == 'RFE' or self.model_name == 'LDA':
