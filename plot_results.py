@@ -13,8 +13,12 @@ from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 import exectimeit
 import tensorflow as tf
+<<<<<<< HEAD
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
+=======
+import warnings
+>>>>>>> 3c5ff7bd782d32f3995394400741b3049c161219
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
@@ -76,6 +80,7 @@ def default_component_tests(classifiers_list):
     model = tester.load_default_model()
     # Define an array with the possible numer of components
     n_components = np.arange(2, train_X.shape[1], 1)
+    # n_components = np.arange(2, 30, 1)
 
     # auxiliary df
     aux_df = pd.DataFrame()
@@ -240,7 +245,7 @@ def test_optimised_model(classifiers_list):
         # metrics.drop('Model', inplace = True)
         metrics['Classifier'] = classifier_name
         
-        aux_df = pd.concat([aux_df, metrics], ignore_index = True, axis = 0)
+        aux_df = pd.concat([aux_df, metrics.to_frame().T], ignore_index = True, axis = 0)
 
     return aux_df
 
@@ -252,7 +257,6 @@ def plot_test_optimised_model(df):
     sns.set(style = 'ticks' ,palette = custom_palette)
 
     plt.figure(figsize=(8,6))
-
     plt.bar(df['Classifier'], df['F1'], width=0.5)
     plt.legend()
     plt.ylabel('Matthews Correlation Coefficient (MCC)')
@@ -260,7 +264,7 @@ def plot_test_optimised_model(df):
     for i, value in enumerate(df['F1']):
         plt.text(i, value + 0.01, str(round(value,3)), ha='center', va='bottom', fontsize=8)
         
-    plt.show()
+    # plt.show()
 
 # Save the optimised models' results to a csv file
 def save_test_optimised_model(df, classifiers_list):
@@ -277,7 +281,7 @@ def save_test_optimised_model(df, classifiers_list):
         # Get the group intended
         group = grouped.get_group(classifier)
         # Store the dataframe in the specific path
-        group.to_csv(f'./Results/Optimised_Tests/{classifier}.csv')
+        group.to_csv(f'./Results/Optimised_Tests/{model_name}_{classifier}.csv')
   
 # Radar chart "class"
 def radar_chart(num_vars, frame='circle'):
@@ -551,15 +555,21 @@ def plot_classifier_times(results_df, classifiers_names):
         plt.xlabel('Number of components')
         plt.ylabel('Training time (ms)')
     plt.savefig(f'./Results/Plots/Times/{model_name}_train_times.svg', dpi = 300)  
-    
+    plt.clf()
     # plot a graph with the prediction times
     for count, name in enumerate(classifiers_names):
         plt.subplot(len(classifiers_names), 1, count + 1)
-        plt.plot(grouped.get_group(name).loc[:, 'N_components'], grouped.get_group(name).loc[:, 'Prediction time'].values, marker = plot_markers[count], label = name)
+        plt.plot(grouped.get_group(name).loc[:, 'N_components'], grouped.get_group(name).loc[:, 'Testing time'].values, marker = plot_markers[count], label = name)
         plt.legend()
         plt.xlabel('Number of components')
         plt.ylabel('Prediction time (ms)')
     plt.savefig(f'./Results/Plots/Times/{model_name}_pred_times.svg', dpi = 300)   
+
+    for classifier in classifiers_names:
+        # Get the group intended
+        group = grouped.get_group(classifier)
+        # Store the dataframe in the specific path
+        group.to_csv(f'./Results/Default_Tests/{model_name}_{classifier}_Times.csv')
 
 # Function that assesses the time for a certain DR technique to fit and predict the data
 def test_DR_technique_times(n_tests = 5):
@@ -641,16 +651,14 @@ def plot_DR_technique_times(results_df):
         os.makedirs('./Results/Plots/Times_DR')
 
     plt.subplot(2, 1, 1)
-    plt.plot(results_df['N_components'], results_df['Pred train time'], marker = 'o', color = 'b', label = 'Train')
+    plt.plot(results_df['N_components'], results_df['Fit time'], marker = 'o', color = 'b')
     # plt.errorbar(results_df['N_components'], results_df['Pred train time'], yerr = results_df['Pred train std'], fmt = 'o', color = 'b')
-    plt.legend()
     plt.xlabel('Number of components')
     plt.ylabel('DR Training time (ms)') 
     
     plt.subplot(2, 1, 2)
     plt.plot(results_df['N_components'], results_df['Pred test time'], marker = 'o', color = 'b', label = 'Test')
     # plt.errorbar(results_df['N_components'], results_df['Pred test time'], yerr = results_df['Pred test std'], fmt = 'o', color = 'b')
-    plt.legend()
     plt.xlabel('Number of components')
     plt.ylabel('DR test time (ms)')
 
@@ -672,9 +680,14 @@ if __name__ == '__main__':
     classifiers_names = [x.__class__.__name__ for x in classifiers_list]
 
     # Choosing the DR technique
+<<<<<<< HEAD
     dr_techniques = ['PCA', 'ICA', 'SVD', 'RF', 'NMF', 'RFE', 'AE']
     # model_name = 'RF'
+=======
+    dr_techniques = ['PCA', 'SVD', 'RF', 'RFE', 'LDA', 'ICA', 'NMF']
+>>>>>>> 3c5ff7bd782d32f3995394400741b3049c161219
 
+    # 1. Performance testing
     for model_name in dr_techniques:
 
         # instantiating the class
@@ -689,21 +702,31 @@ if __name__ == '__main__':
         optimised_df = test_optimised_model(classifiers_list)
         save_test_optimised_model(optimised_df, classifiers_names)
 
-        # # Conducting the classifier time tests
-        # times_df = test_classifier_times(classifiers_list, n_tests = 5)
-        # plot_classifier_times(times_df, classifiers_names)
-        # print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+    # 2. Classifier time testing
+    for model_name in dr_techniques:
+
+        # instantiating the class
+        tester = Testing.Testing(model_name)
+
+        # Conducting the classifier time tests
+        times_df = test_classifier_times(classifiers_list, n_tests = 5)
+        plot_classifier_times(times_df, classifiers_names)
+        print(f'Tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
+
+
+
+    # 3. Some DR methods' time testing
+    time_tests = ['PCA', 'NMF', 'AE']    
+    for model_name in time_tests:
+        
+        # instantiating the class
+        tester = Testing.Testing(model_name)
 
         # Conducting the DR technique times tests
-        dr_times_df = test_DR_technique_times(n_tests = 10)
+        dr_times_df = test_DR_technique_times(n_tests = 5)
         plot_DR_technique_times(dr_times_df)
         print(f'Time tests for DR technique {model_name} concluded... Moving to the next one... \n\n')
     
-    # model_name = 'PCA'
-    # tester = Testing.Testing(model_name)
-    # dr_times_df = test_DR_technique_times(n_tests = 10)
-    # print(dr_times_df)
-    # plot_DR_technique_times(dr_times_df)
 
    
 
