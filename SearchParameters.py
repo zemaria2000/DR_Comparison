@@ -1,5 +1,4 @@
 # Script that creates all the search parameters for Non-DL models
-# Non-DL models so far - PCA, ICA
 
 import skopt
 import pickle
@@ -31,7 +30,6 @@ ss_ica.append(skopt.space.Integer(2, X.shape[1]-1, name = 'n_components'))
 ss_ica.append(skopt.space.Categorical(['parallel', 'deflation'], name = 'algorithm'))
 ss_ica.append(skopt.space.Categorical(['arbitrary-variance', 'unit-variance'], name = 'whiten'))
 ss_ica.append(skopt.space.Categorical(['logcosh', 'exp', 'cube'], name = 'fun'))
-# ss_ica.append(skopt.space.Integer(200, 5000, name = 'max_iter'))
 ss_ica.append(skopt.space.Real(1e-5, 1e-3, name = 'tol'))
 ss_ica.append(skopt.space.Categorical(['eigh', 'svd'], name = 'whiten_solver'))
 
@@ -40,12 +38,6 @@ ss_svd = []
 ss_svd.append(skopt.space.Integer(2, X.shape[1]-1, name = 'n_components'))
 ss_svd.append(skopt.space.Categorical(['arpack', 'randomized'], name = 'algorithm'))
 ss_svd.append(skopt.space.Categorical(['auto', 'OR', 'LU', 'none'], name = 'power_iteration_normalizer'))
-
-# LDA
-ss_lda = []
-ss_lda.append(skopt.space.Integer(2, len(np.unique(y))-1, name = 'n_components'))
-# ss_lda.append(skopt.space.Categorical(['svd', 'eigen'], name = 'solver'))
-# ss_lda.append(skopt.space.Real(0, 1, name = 'shrinkage'))
 
 # RF (feature selection)
 ss_rf = []
@@ -58,9 +50,6 @@ ss_rf.append(skopt.space.Categorical([True, False], name = 'bootstrap'))
 ss_nmf = []
 ss_nmf.append(skopt.space.Integer(2, X.shape[1]-1, name = 'n_components'))
 ss_nmf.append(skopt.space.Categorical(['random', 'nndsvd', 'nndsvda', 'nndsvdar'], name = 'init'))
-# ss_nmf.append(skopt.space.Categorical(['cd', 'mu'], name = 'solver'))
-# ss_nmf.append(skopt.space.Categorical(['frobenius', 'kullback-leibler', 'itakura-saito'], name = 'beta_loss'))
-# ss_nmf.append(skopt.space.Categorical(['kullback-leibler', 'itakura-saito'], name = 'beta_loss'))
 
 # RFEV (feature selection, Recursive Feature Elimination with Cross-Validation)
 ss_rfe = []
