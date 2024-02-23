@@ -2,7 +2,7 @@ from Classes import Optimise
 import yaml, sys
 
 # We should launch the file as "python train.py <model>, the model being a string correspondant to the model to be trained
-# Current possible strings to be used - ['PCA', 'FastICA', 'AE', 'VAE']
+
 args = sys.argv
 # Loading the settings file
 with open('settings.yaml') as file:
