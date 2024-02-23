@@ -3,18 +3,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns  
-import json, time, os
+import json, os
 import tqdm, yaml
-from matplotlib.patches import Circle, RegularPolygon
-from matplotlib.path import Path
-from matplotlib.projections.polar import PolarAxes
-from matplotlib.projections import register_projection
-from matplotlib.spines import Spine
-from matplotlib.transforms import Affine2D
 import exectimeit
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, multilabel_confusion_matrix, matthews_corrcoef
 
 # Classifiers
 from sklearn.neural_network import MLPClassifier as MLP
