@@ -6,6 +6,3 @@
 
 # Results folder
 /Results
-
-# preprocessing of data file
-Data_pre_processing.py
