@@ -61,3 +61,24 @@ If you wish to conduct hyperparameter optimisation, you should additionally (and
 
 3.  Then run the tests
 
+
+
+### Full essential file/folder description
+
+* Classes folder - folder containing 2 classes that were created for this particular testing procedure:
+    * [Testing.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Classes/Testing.py) - class that is used to ease the testing process of the models. It has methods that fit the DR techniques, reduce the datasets, and even store the results;
+    * [Optimise.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Classes/Optimise.py) - contains a series of important methods that help with the hyperparameter optimisation process of the DR techniques, such as the optimisation functions for the DL and Non-DL methods, or the storing of the optimised models;
+
+* [Data_Pre_Processing.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Data_Pre_Processing.py) - file that is used to pre-process the private dataset used. It is specific for the dataset. Yet, it gives an idea of the main pre-processing steps conducted, from organising the original dataset, label encoding, to balancing the number of samples
+
+* [SearchParameters.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Classes/SearchParameters.py) - file that creates the search space for the 6 Non-DL DR methods, in case of optimisation. Each method has a different search space, and it's up to the user to define the search space he wishes to
+
+* [train.py](https://github.com/zemaria2000/DR_Comparison/tree/main/train.py) - file that conducts the hyperparameter optimisation process. It makes use of the `Optimise.py` class that was created, and it can optimise all methods in a row or the method that the user specifies as a command argument
+
+* [Results.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Results.py) - this was the file that allowed to get the results for the tests that were conducted and are present in the repository's related paper. It has 4 different tests, and makes use of the `Testing.py` class. It can analyse, for each number of reduced components for each technique, the classifier's performance metrics; it allows for testing the optimised DR techniques as well; and then it allows for testing the execution times of both the classifiers and the DR techniques
+
+* [ResultsProcessing.py](https://github.com/zemaria2000/DR_Comparison/tree/main/ResultsProcessing.py) - it just was created to better organise some information regarding the tests. Nothing else
+
+* [Plots.py](https://github.com/zemaria2000/DR_Comparison/tree/main/Plots.py) - another "auxiliary" file, used to plot some graphs for the paper
+
+* [settings.yaml](https://github.com/zemaria2000/DR_Comparison/tree/main/settings.yaml) - file containing a series of common values, strings and arrays used throughout the multiple files of the repository
