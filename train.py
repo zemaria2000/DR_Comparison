@@ -1,7 +1,5 @@
 from Classes import Optimise
 import yaml, sys
-import pickle
-
 
 # We should launch the file as "python train.py <model>, the model being a string correspondant to the model to be trained
 # Current possible strings to be used - ['PCA', 'FastICA', 'AE', 'VAE']
