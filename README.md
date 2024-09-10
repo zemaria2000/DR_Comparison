@@ -2,7 +2,7 @@
 
 Repository containing the code with a comparison between a series of Dimensionality Reduction techniques. 
 
-It is the repository connected to a paper developed in the scope of the IoTBDS conference (<b>paper is unavailable at the moment</b>)
+It is the repository connected to a paper developed in the scope of the IoTBDS conference - DOI: 10.5220/0012734000003705
 
 
 ## Use case description
@@ -16,7 +16,7 @@ A ML use case was created, where for 2 different boilers, a 4 class multi-labell
 
 ## Different repository possibilities
 
-The main work, thoroughly described in the repository's paper (<b>not yet available</b>), involved the development of 3 different tests:
+The main work, thoroughly described in the repository's <a href="[https://github.com/zemaria2000/DR_Comparison](https://www.scitepress.org/PublicationsDetail.aspx?ID=Lc8ZXRui3mI=&t=1)" target="_blank">paper</a>, involved the development of 3 different tests:
 
 1.  Assessing the influence of different DR approaches with varying numbers of reduced features on classifier performance;
 2.  Evaluating classifier fitting and prediction times for different dataset dimensions;
