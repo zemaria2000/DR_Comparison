@@ -16,7 +16,7 @@ A ML use case was created, where for 2 different boilers, a 4 class multi-labell
 
 ## Different repository possibilities
 
-The main work, thoroughly described in the repository's <a href="[https://github.com/zemaria2000/DR_Comparison](https://www.scitepress.org/PublicationsDetail.aspx?ID=Lc8ZXRui3mI=&t=1)" target="_blank">paper</a>, involved the development of 3 different tests:
+The main work, thoroughly described in the repository's <a href="https://www.scitepress.org/PublicationsDetail.aspx?ID=Lc8ZXRui3mI=&t=1" target="_blank">paper</a>, involved the development of 3 different tests:
 
 1.  Assessing the influence of different DR approaches with varying numbers of reduced features on classifier performance;
 2.  Evaluating classifier fitting and prediction times for different dataset dimensions;
